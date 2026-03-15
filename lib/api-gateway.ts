@@ -1,4 +1,4 @@
-const gatewayBaseUrl = process.env.NEXT_PUBLIC_API_GATEWAY_URL || "http://localhost:4000"
+const gatewayBaseUrl = process.env.NEXT_PUBLIC_API_GATEWAY_URL || "https://campus-life-os.onrender.com"
 
 export interface AuthLoginResponse {
   token: string
