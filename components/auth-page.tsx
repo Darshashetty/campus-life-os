@@ -25,16 +25,26 @@ export function AuthPage({ onLogin }: AuthPageProps) {
     confirmPassword: "",
   })
 
+  const normalizeEmail = (email: string) => email.trim().toLowerCase()
+  const isValidEmail = (email: string) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
+
+    const normalizedEmail = normalizeEmail(formData.email)
 
     if (!isLogin && formData.password !== formData.confirmPassword) {
       alert("Passwords do not match!")
       return
     }
 
-    if (!formData.email || !formData.password) {
+    if (!normalizedEmail || !formData.password) {
       alert("Please fill in all required fields!")
+      return
+    }
+
+    if (!isValidEmail(normalizedEmail)) {
+      alert("Please enter a valid email address.")
       return
     }
 
@@ -47,13 +57,21 @@ export function AuthPage({ onLogin }: AuthPageProps) {
       setIsSubmitting(true)
       let data
       if (isLogin) {
-        data = await loginViaGateway(formData.email, formData.password)
+        data = await loginViaGateway(normalizedEmail, formData.password)
       } else {
-        data = await registerViaGateway(formData.name, formData.email, formData.password)
+        data = await registerViaGateway(formData.name, normalizedEmail, formData.password)
       }
       onLogin(data.user.email, data.user.name, data.token)
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : "Authentication failed"
+      if (isLogin && errorMessage.toLowerCase().includes("invalid credentials")) {
+        if (normalizedEmail.includes("985gmail.com")) {
+          alert('Invalid credentials. This email looks mistyped (did you mean "@gmail.com"?). You can also click "Sign up" to create an account.')
+          return
+        }
+        alert('Invalid credentials. If this is a new account, click "Sign up" first, or use the demo account: demo@university.edu / demo123')
+        return
+      }
       alert(errorMessage)
     } finally {
       setIsSubmitting(false)
