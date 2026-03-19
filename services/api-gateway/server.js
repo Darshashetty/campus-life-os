@@ -43,22 +43,47 @@ app.get("/health", (_req, res) => {
 })
 
 app.get("/api/services/health", async (_req, res) => {
-  try {
-    const [student, tasks, auth, notification, campus] = await Promise.all([
-      axios.get(`${studentServiceUrl}/health`),
-      axios.get(`${tasksServiceUrl}/health`),
-      axios.get(`${authServiceUrl}/health`),
-      axios.get(`${notificationServiceUrl}/health`),
-      axios.get(`${campusServiceUrl}/health`),
-    ])
+  const checks = [
+    { name: "student-service", url: `${studentServiceUrl}/health` },
+    { name: "tasks-service", url: `${tasksServiceUrl}/health` },
+    { name: "auth-service", url: `${authServiceUrl}/health` },
+    { name: "notification-service", url: `${notificationServiceUrl}/health` },
+    { name: "campus-service", url: `${campusServiceUrl}/health` },
+  ]
 
-    res.json({
+  const results = await Promise.allSettled(checks.map((check) => axios.get(check.url)))
+
+  const services = results.map((result, index) => {
+    const check = checks[index]
+    if (result.status === "fulfilled") {
+      return {
+        service: check.name,
+        status: "ok",
+        url: check.url,
+      }
+    }
+
+    return {
+      service: check.name,
+      status: "error",
+      url: check.url,
+      reason: result.reason?.message || "request failed",
+    }
+  })
+
+  const allHealthy = services.every((item) => item.status === "ok")
+  if (!allHealthy) {
+    return res.status(502).json({
+      message: "Unable to reach all services",
       gateway: { service: "api-gateway", status: "ok" },
-      services: [student.data, tasks.data, auth.data, notification.data, campus.data],
+      services,
     })
-  } catch {
-    res.status(502).json({ message: "Unable to reach all services" })
   }
+
+  return res.json({
+    gateway: { service: "api-gateway", status: "ok" },
+    services,
+  })
 })
 
 app.post("/api/auth/register", async (req, res) => {
