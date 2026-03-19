@@ -51,15 +51,25 @@ app.get("/api/services/health", async (_req, res) => {
     { name: "campus-service", url: `${campusServiceUrl}/health` },
   ]
 
-  const results = await Promise.allSettled(checks.map((check) => axios.get(check.url)))
+  const wait = (ms) => new Promise((resolve) => setTimeout(resolve, ms))
 
-  const services = results.map((result, index) => {
-    const check = checks[index]
-    if (result.status === "fulfilled") {
-      return {
-        service: check.name,
-        status: "ok",
-        url: check.url,
+  const checkWithRetry = async (check, attempts = 3) => {
+    let lastError = null
+
+    for (let attempt = 1; attempt <= attempts; attempt += 1) {
+      try {
+        await axios.get(check.url, { timeout: 25000 })
+        return {
+          service: check.name,
+          status: "ok",
+          url: check.url,
+        }
+      } catch (error) {
+        lastError = error
+        if (attempt < attempts) {
+          // Back off between retries to give cold services time to wake up.
+          await wait(attempt * 3000)
+        }
       }
     }
 
@@ -67,9 +77,17 @@ app.get("/api/services/health", async (_req, res) => {
       service: check.name,
       status: "error",
       url: check.url,
-      reason: result.reason?.message || "request failed",
+      reason: lastError?.message || "request failed",
     }
-  })
+  }
+
+  const services = []
+  for (const check of checks) {
+    // Check services one-by-one to avoid burst failures and 429 responses.
+    // eslint-disable-next-line no-await-in-loop
+    const result = await checkWithRetry(check)
+    services.push(result)
+  }
 
   const allHealthy = services.every((item) => item.status === "ok")
   if (!allHealthy) {
