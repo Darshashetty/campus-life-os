@@ -42,6 +42,18 @@ app.get("/health", (_req, res) => {
   res.json({ service: "api-gateway", status: "ok" })
 })
 
+app.get("/", (_req, res) => {
+  res.json({
+    service: "api-gateway",
+    status: "ok",
+    message: "API gateway is running",
+    endpoints: {
+      health: "GET /health",
+      servicesHealth: "GET /api/services/health",
+    },
+  })
+})
+
 app.get("/api/services/health", async (_req, res) => {
   const checks = [
     { name: "student-service", url: `${studentServiceUrl}/health` },
