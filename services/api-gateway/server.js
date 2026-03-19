@@ -4,11 +4,11 @@ import axios from "axios"
 
 const app = express()
 const PORT = process.env.PORT || 4000
-const studentServiceUrl = process.env.STUDENT_SERVICE_URL || "https://student-service.onrender.com"
+const studentServiceUrl = process.env.STUDENT_SERVICE_URL || "https://student-service-aszb.onrender.com"
 const tasksServiceUrl = process.env.TASKS_SERVICE_URL || "https://darsha-tasks-service.onrender.com"
 const authServiceUrl = process.env.AUTH_SERVICE_URL || "https://auth-service-cj6i.onrender.com"
 const notificationServiceUrl = process.env.NOTIFICATION_SERVICE_URL || "https://darsha-notification-service.onrender.com"
-const campusServiceUrl = process.env.CAMPUS_SERVICE_URL || "https://campus-life-os.onrender.com"
+const campusServiceUrl = process.env.CAMPUS_SERVICE_URL || "https://darsha-campus-service.onrender.com"
 
 app.use(cors())
 app.use(express.json())
