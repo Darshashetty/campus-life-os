@@ -9,7 +9,6 @@
   },
   "dependencies": {
     "cors": "^2.8.5",
-    "express": "^4.21.2",
-    "my-v0-project": "file:../.."
+    "express": "^4.21.2"
   }
 }

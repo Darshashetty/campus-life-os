@@ -11,6 +11,7 @@ export function QRScanner() {
   const [isScanning, setIsScanning] = useState(false)
   const [scannedUrl, setScannedUrl] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
+  const [cameraAccessFailed, setCameraAccessFailed] = useState(false)
   const [recentScans, setRecentScans] = useState<Array<{ url: string; timestamp: Date }>>([])
   const videoRef = useRef<HTMLVideoElement>(null)
   const canvasRef = useRef<HTMLCanvasElement>(null)
@@ -21,6 +22,7 @@ export function QRScanner() {
   const startScanning = async () => {
     setError(null)
     setScannedUrl(null)
+    setCameraAccessFailed(false)
 
     try {
       const stream = await navigator.mediaDevices.getUserMedia({
@@ -38,6 +40,8 @@ export function QRScanner() {
         }, 500)
       }
     } catch (err) {
+      setScannedUrl(null)
+      setCameraAccessFailed(true)
       setError("Failed to access camera. Please allow camera permissions.")
     }
   }
@@ -89,6 +93,7 @@ export function QRScanner() {
 
   // Handle detected QR code
   const handleQRDetected = (url: string) => {
+    setError(null)
     setScannedUrl(url)
     setRecentScans((prev) => [{ url, timestamp: new Date() }, ...prev.slice(0, 9)])
     stopScanning()
@@ -96,6 +101,7 @@ export function QRScanner() {
 
   // Manual test function for demo
   const simulateScan = (url: string) => {
+    if (cameraAccessFailed) return
     handleQRDetected(url)
   }
 
@@ -164,16 +170,36 @@ export function QRScanner() {
           <div className="space-y-2">
             <p className="text-sm text-muted-foreground">Demo: Simulate scanning a poster</p>
             <div className="grid grid-cols-2 gap-2">
-              <Button variant="outline" size="sm" onClick={() => simulateScan("https://example.com/tech-fest-2024")}>
+              <Button
+                variant="outline"
+                size="sm"
+                disabled={cameraAccessFailed}
+                onClick={() => simulateScan("https://example.com/tech-fest-2024")}
+              >
                 Tech Fest Poster
               </Button>
-              <Button variant="outline" size="sm" onClick={() => simulateScan("https://example.com/sports-event")}>
+              <Button
+                variant="outline"
+                size="sm"
+                disabled={cameraAccessFailed}
+                onClick={() => simulateScan("https://example.com/sports-event")}
+              >
                 Sports Event
               </Button>
-              <Button variant="outline" size="sm" onClick={() => simulateScan("https://example.com/career-fair")}>
+              <Button
+                variant="outline"
+                size="sm"
+                disabled={cameraAccessFailed}
+                onClick={() => simulateScan("https://example.com/career-fair")}
+              >
                 Career Fair
               </Button>
-              <Button variant="outline" size="sm" onClick={() => simulateScan("https://example.com/cultural-night")}>
+              <Button
+                variant="outline"
+                size="sm"
+                disabled={cameraAccessFailed}
+                onClick={() => simulateScan("https://example.com/cultural-night")}
+              >
                 Cultural Night
               </Button>
             </div>
@@ -187,7 +213,7 @@ export function QRScanner() {
           )}
 
           {/* Scanned Result */}
-          {scannedUrl && (
+          {scannedUrl && !error && (
             <Alert>
               <AlertDescription className="flex items-center justify-between gap-2">
                 <div className="flex-1 min-w-0">
