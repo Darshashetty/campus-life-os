@@ -1,5 +1,7 @@
 const gatewayBaseUrl = process.env.NEXT_PUBLIC_API_GATEWAY_URL || "https://campus-life-os.onrender.com"
 
+const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms))
+
 export interface AuthLoginResponse {
   token: string
   user: {
@@ -130,24 +132,38 @@ export interface HelpBotChatResponse {
 }
 
 const request = async <T>(path: string, init?: RequestInit): Promise<T> => {
-  const response = await fetch(`${gatewayBaseUrl}${path}`, {
-    ...init,
-    headers: {
-      "Content-Type": "application/json",
-      ...(init?.headers || {}),
-    },
-  })
+  const maxAttempts = 3
+  let lastError: Error | null = null
 
-  if (!response.ok) {
+  for (let attempt = 1; attempt <= maxAttempts; attempt += 1) {
+    const response = await fetch(`${gatewayBaseUrl}${path}`, {
+      ...init,
+      headers: {
+        "Content-Type": "application/json",
+        ...(init?.headers || {}),
+      },
+    })
+
+    if (response.ok) {
+      if (response.status === 204) {
+        return undefined as T
+      }
+      return response.json() as Promise<T>
+    }
+
     const body = await response.json().catch(() => ({}))
-    throw new Error(body?.message || `Request failed: ${response.status}`)
+    lastError = new Error(body?.message || `Request failed: ${response.status}`)
+
+    const isTransient = [429, 502, 503, 504].includes(response.status)
+    if (!isTransient || attempt === maxAttempts) {
+      throw lastError
+    }
+
+    // Render free instances may need a short warm-up delay.
+    await sleep(attempt * 1500)
   }
 
-  if (response.status === 204) {
-    return undefined as T
-  }
-
-  return response.json() as Promise<T>
+  throw lastError || new Error("Request failed")
 }
 
 export const registerViaGateway = async (
