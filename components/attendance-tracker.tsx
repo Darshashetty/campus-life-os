@@ -1,7 +1,7 @@
 "use client"
 
 import { useEffect, useState } from "react"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Progress } from "@/components/ui/progress"
@@ -42,13 +42,15 @@ export function AttendanceTracker() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-3xl font-bold tracking-tight">Attendance Tracker</h1>
-        <p className="text-muted-foreground mt-1">Monitor your class attendance across all courses</p>
-      </div>
+      <Card className="app-surface">
+        <CardHeader>
+          <CardTitle className="text-2xl">Attendance Tracker</CardTitle>
+          <CardDescription>Monitor attendance trends and act early on at-risk courses.</CardDescription>
+        </CardHeader>
+      </Card>
 
       <div className="grid gap-4 md:grid-cols-3">
-        <Card>
+        <Card className="app-surface">
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-medium">Overall Attendance</CardTitle>
           </CardHeader>
@@ -61,7 +63,7 @@ export function AttendanceTracker() {
             </p>
           </CardContent>
         </Card>
-        <Card>
+        <Card className="app-surface">
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-medium">Safe Courses</CardTitle>
           </CardHeader>
@@ -72,7 +74,7 @@ export function AttendanceTracker() {
             <p className="text-xs text-muted-foreground mt-1">Above 75% attendance</p>
           </CardContent>
         </Card>
-        <Card>
+        <Card className="app-surface">
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-medium">At Risk</CardTitle>
           </CardHeader>
@@ -89,7 +91,7 @@ export function AttendanceTracker() {
         {courses.map((course) => {
           const percentage = Number(calculatePercentage(course.attended, course.totalClasses))
           return (
-            <Card key={course.id}>
+            <Card key={course.id} className="app-surface">
               <CardContent className="p-4">
                 <div className="flex items-start justify-between gap-4 mb-3">
                   <div className="flex-1">

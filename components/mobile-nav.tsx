@@ -1,5 +1,6 @@
 "use client"
 
+import { useState } from "react"
 import { Button } from "@/components/ui/button"
 import {
   HomeIcon,
@@ -19,10 +20,8 @@ import {
   UtensilsIcon,
   CarIcon,
   ContactIcon,
-  NetworkIcon,
 } from "lucide-react"
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet"
-import { Badge } from "@/components/ui/badge"
 
 interface MobileNavProps {
   currentView: string
@@ -30,16 +29,17 @@ interface MobileNavProps {
 }
 
 export function MobileNav({ currentView, onNavigate }: MobileNavProps) {
+  const [isSheetOpen, setIsSheetOpen] = useState(false)
+
   const mainNavItems = [
     { id: "dashboard", label: "Home", icon: HomeIcon },
     { id: "deadlines", label: "Deadlines", icon: CalendarIcon },
     { id: "scanner", label: "Scanner", icon: ScanLineIcon },
-    { id: "notifications", label: "Alerts", icon: BellIcon, badge: 3 },
+    { id: "notifications", label: "Alerts", icon: BellIcon },
   ]
 
   const additionalNavItems = [
     { id: "skilltime", label: "SkillTime Hub", icon: UsersIcon },
-    { id: "architecture", label: "Architecture", icon: NetworkIcon },
     { id: "forms", label: "Forms Portal", icon: FileTextIcon },
     { id: "lostfound", label: "Lost & Found", icon: SearchIcon },
     { id: "booking", label: "Queue Booking", icon: ClockIcon },
@@ -57,38 +57,35 @@ export function MobileNav({ currentView, onNavigate }: MobileNavProps) {
   ]
 
   return (
-    <nav className="md:hidden fixed bottom-0 left-0 right-0 z-50 border-t border-border bg-card/95 backdrop-blur supports-[backdrop-filter]:bg-card/80 safe-area-inset-bottom">
-      <div className="grid grid-cols-5 h-16">
+    <nav className="safe-area-inset-bottom fixed bottom-2 left-0 right-0 z-50 px-3 md:hidden">
+      <div className="mx-auto grid h-16 max-w-xl grid-cols-5 rounded-2xl border border-border/70 bg-card/85 shadow-lg backdrop-blur-xl supports-[backdrop-filter]:bg-card/75">
         {mainNavItems.map((item) => (
           <Button
             key={item.id}
             variant="ghost"
             onClick={() => onNavigate(item.id)}
-            className={`flex flex-col items-center justify-center gap-1 h-full rounded-none relative ${
-              currentView === item.id ? "text-primary bg-primary/10" : "text-muted-foreground"
+            className={`relative h-full rounded-none border-0 flex-col items-center justify-center gap-1 ${
+              currentView === item.id
+                ? "bg-primary/12 text-primary before:absolute before:bottom-0 before:h-1 before:w-6 before:rounded-full before:bg-primary"
+                : "text-muted-foreground"
             }`}
           >
             <item.icon className="size-5" />
             <span className="text-xs font-medium">{item.label}</span>
-            {item.badge && (
-              <Badge className="absolute top-2 right-4 size-4 flex items-center justify-center p-0 text-[10px]">
-                {item.badge}
-              </Badge>
-            )}
           </Button>
         ))}
 
-        <Sheet>
+        <Sheet open={isSheetOpen} onOpenChange={setIsSheetOpen}>
           <SheetTrigger asChild>
             <Button
               variant="ghost"
-              className="flex flex-col items-center justify-center gap-1 h-full rounded-none text-muted-foreground"
+              className="h-full rounded-none border-0 flex-col items-center justify-center gap-1 text-muted-foreground"
             >
               <MenuIcon className="size-5" />
               <span className="text-xs font-medium">More</span>
             </Button>
           </SheetTrigger>
-          <SheetContent side="bottom" className="rounded-t-2xl">
+          <SheetContent side="bottom" className="rounded-t-3xl border-border/70 bg-card/95">
             <SheetHeader>
               <SheetTitle>More Features</SheetTitle>
             </SheetHeader>
@@ -97,8 +94,11 @@ export function MobileNav({ currentView, onNavigate }: MobileNavProps) {
                 <Button
                   key={item.id}
                   variant={currentView === item.id ? "default" : "outline"}
-                  onClick={() => onNavigate(item.id)}
-                  className="justify-start gap-3 h-14"
+                  onClick={() => {
+                    onNavigate(item.id)
+                    setIsSheetOpen(false)
+                  }}
+                  className="h-14 justify-start gap-3 rounded-xl"
                 >
                   <item.icon className="size-5" />
                   <span className="text-base">{item.label}</span>

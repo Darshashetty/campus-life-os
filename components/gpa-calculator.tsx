@@ -58,13 +58,15 @@ export function GPACalculator() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-3xl font-bold tracking-tight">GPA Calculator</h1>
-        <p className="text-muted-foreground mt-1">Track your academic performance and calculate GPA</p>
-      </div>
+      <Card className="app-surface">
+        <CardHeader>
+          <CardTitle className="text-2xl">GPA Calculator</CardTitle>
+          <p className="text-sm text-muted-foreground">Track your academic performance with consistent grade and credit insights.</p>
+        </CardHeader>
+      </Card>
 
       <div className="grid gap-4 md:grid-cols-3">
-        <Card>
+        <Card className="app-surface">
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-medium">Current GPA</CardTitle>
           </CardHeader>
@@ -90,7 +92,7 @@ export function GPACalculator() {
             </div>
           </CardContent>
         </Card>
-        <Card>
+        <Card className="app-surface">
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-medium">Total Credits</CardTitle>
           </CardHeader>
@@ -99,7 +101,7 @@ export function GPACalculator() {
             <p className="text-xs text-muted-foreground mt-1">Credit hours completed</p>
           </CardContent>
         </Card>
-        <Card>
+        <Card className="app-surface">
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-medium">Courses</CardTitle>
           </CardHeader>
@@ -110,7 +112,7 @@ export function GPACalculator() {
         </Card>
       </div>
 
-      <Card>
+      <Card className="app-surface">
         <CardHeader>
           <CardTitle>Add Course</CardTitle>
         </CardHeader>
@@ -159,7 +161,7 @@ export function GPACalculator() {
         </CardContent>
       </Card>
 
-      <Card>
+      <Card className="app-surface">
         <CardHeader>
           <CardTitle>Course List</CardTitle>
         </CardHeader>

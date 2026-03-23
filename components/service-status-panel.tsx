@@ -19,16 +19,11 @@ interface ServiceStatusPanelProps {
 }
 
 export function ServiceStatusPanel({ health }: ServiceStatusPanelProps) {
-  const services = health
-    ? [health.gateway, ...health.services]
-    : [
-        { service: "api-gateway", status: "unknown" },
-        { service: "auth-service", status: "unknown" },
-        { service: "student-service", status: "unknown" },
-        { service: "tasks-service", status: "unknown" },
-        { service: "notification-service", status: "unknown" },
-        { service: "campus-service", status: "unknown" },
-      ]
+  if (!health) {
+    return null
+  }
+
+  const services = [health.gateway, ...health.services]
 
   return (
     <Card>
@@ -39,7 +34,8 @@ export function ServiceStatusPanel({ health }: ServiceStatusPanelProps) {
       <CardContent className="grid gap-3 md:grid-cols-2 xl:grid-cols-5">
         {services.map((item) => {
           const Icon = iconMap[item.service as keyof typeof iconMap] || ServerIcon
-          const isHealthy = item.status === "ok"
+          const statusLabel = item.status || "unknown"
+          const isHealthy = statusLabel === "ok"
 
           return (
             <div key={item.service} className="rounded-xl border border-border p-4 space-y-3 bg-card">
@@ -47,7 +43,7 @@ export function ServiceStatusPanel({ health }: ServiceStatusPanelProps) {
                 <div className="rounded-lg bg-primary/10 p-2">
                   <Icon className="size-5 text-primary" />
                 </div>
-                <Badge variant={isHealthy ? "default" : "secondary"}>{isHealthy ? "Healthy" : item.status}</Badge>
+                <Badge variant={isHealthy ? "default" : "secondary"}>{isHealthy ? "Healthy" : statusLabel}</Badge>
               </div>
               <div>
                 <p className="font-semibold text-sm capitalize">{item.service.replace(/-/g, " ")}</p>

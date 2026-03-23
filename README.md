@@ -172,9 +172,28 @@ curl -X POST http://localhost:4000/api/auth/register \
 
 ### Run with npm
 
+Create local env file first:
+
+```bash
+cp .env.example .env.local
+```
+
+On Windows PowerShell:
+
+```powershell
+Copy-Item .env.example .env.local
+```
+
+Install dependencies:
+
 ```bash
 npm install
 npm run microservices:install
+```
+
+Start backend services and gateway:
+
+```bash
 npm run microservices:dev
 ```
 

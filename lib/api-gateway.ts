@@ -1,4 +1,12 @@
-const gatewayBaseUrl = process.env.NEXT_PUBLIC_API_GATEWAY_URL || "https://campus-life-os.onrender.com"
+const gatewayBaseUrl =
+  process.env.NEXT_PUBLIC_API_GATEWAY_URL ||
+  (process.env.NODE_ENV === "development" ? "http://localhost:4000" : "https://campus-life-os.onrender.com")
+const authServiceFallbackUrl =
+  process.env.NEXT_PUBLIC_AUTH_SERVICE_URL ||
+  (process.env.NODE_ENV === "development" ? "http://localhost:4003" : "https://auth-service-cj6i.onrender.com")
+const campusServiceFallbackUrl =
+  process.env.NEXT_PUBLIC_CAMPUS_SERVICE_URL ||
+  (process.env.NODE_ENV === "development" ? "http://localhost:4005" : "https://darsha-campus-service.onrender.com")
 
 const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms))
 
@@ -48,6 +56,17 @@ export interface LostFoundItem {
   type: "lost" | "found"
   category: string
   contactName: string
+}
+
+export interface LostFoundContactRequest {
+  id: number
+  itemId: number
+  itemTitle: string
+  recipientName: string
+  senderName: string
+  message: string
+  status: string
+  createdAt: string
 }
 
 export interface DirectoryPerson {
@@ -131,18 +150,63 @@ export interface HelpBotChatResponse {
   timestamp: string
 }
 
+export interface MarketplaceContactResponse {
+  status: string
+  message: string
+  contactId: number
+}
+
+const mapGatewayErrorMessage = (message: string) => {
+  if (message.toLowerCase().includes("gateway proxy error")) {
+    return "Gateway is reachable but an upstream service is temporarily unavailable. Please retry in a few seconds."
+  }
+  return message
+}
+
+const requestAuthServiceFallback = async <T>(path: string, body: Record<string, unknown>): Promise<T> => {
+  const response = await fetch(`${authServiceFallbackUrl}${path}`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(body),
+  })
+
+  if (!response.ok) {
+    const fallbackBody = await response.json().catch(() => ({}))
+    throw new Error(fallbackBody?.message || `Auth fallback failed: ${response.status}`)
+  }
+
+  return response.json() as Promise<T>
+}
+
 const request = async <T>(path: string, init?: RequestInit): Promise<T> => {
-  const maxAttempts = 3
+  const maxAttempts = 6
   let lastError: Error | null = null
 
   for (let attempt = 1; attempt <= maxAttempts; attempt += 1) {
-    const response = await fetch(`${gatewayBaseUrl}${path}`, {
-      ...init,
-      headers: {
-        "Content-Type": "application/json",
-        ...(init?.headers || {}),
-      },
-    })
+    let response: Response
+
+    try {
+      response = await fetch(`${gatewayBaseUrl}${path}`, {
+        ...init,
+        headers: {
+          "Content-Type": "application/json",
+          ...(init?.headers || {}),
+        },
+      })
+    } catch {
+      lastError = new Error(
+        `Unable to connect to API Gateway at ${gatewayBaseUrl}. Start backend services with \"npm run microservices:dev\".`,
+      )
+
+      if (attempt === maxAttempts) {
+        throw lastError
+      }
+
+      await sleep(attempt * 2000)
+      continue
+    }
 
     if (response.ok) {
       if (response.status === 204) {
@@ -152,15 +216,15 @@ const request = async <T>(path: string, init?: RequestInit): Promise<T> => {
     }
 
     const body = await response.json().catch(() => ({}))
-    lastError = new Error(body?.message || `Request failed: ${response.status}`)
+    lastError = new Error(mapGatewayErrorMessage(body?.message || `Request failed: ${response.status}`))
 
     const isTransient = [429, 502, 503, 504].includes(response.status)
     if (!isTransient || attempt === maxAttempts) {
       throw lastError
     }
 
-    // Render free instances may need a short warm-up delay.
-    await sleep(attempt * 1500)
+    // Render free instances may need up to ~50s warm-up.
+    await sleep(attempt * 5000)
   }
 
   throw lastError || new Error("Request failed")
@@ -172,17 +236,37 @@ export const registerViaGateway = async (
   password: string,
   role = "student",
 ): Promise<AuthLoginResponse> => {
-  return request<AuthLoginResponse>("/api/auth/register", {
-    method: "POST",
-    body: JSON.stringify({ name, email, password, role }),
-  })
+  const payload = { name, email, password, role }
+
+  try {
+    return await request<AuthLoginResponse>("/api/auth/register", {
+      method: "POST",
+      body: JSON.stringify(payload),
+    })
+  } catch (error) {
+    const message = error instanceof Error ? error.message.toLowerCase() : ""
+    if (message.includes("gateway") || message.includes("unable to connect")) {
+      return requestAuthServiceFallback<AuthLoginResponse>("/api/auth/register", payload)
+    }
+    throw error
+  }
 }
 
 export const loginViaGateway = async (email: string, password: string): Promise<AuthLoginResponse> => {
-  return request<AuthLoginResponse>("/api/auth/login", {
-    method: "POST",
-    body: JSON.stringify({ email, password }),
-  })
+  const payload = { email, password }
+
+  try {
+    return await request<AuthLoginResponse>("/api/auth/login", {
+      method: "POST",
+      body: JSON.stringify(payload),
+    })
+  } catch (error) {
+    const message = error instanceof Error ? error.message.toLowerCase() : ""
+    if (message.includes("gateway") || message.includes("unable to connect")) {
+      return requestAuthServiceFallback<AuthLoginResponse>("/api/auth/login", payload)
+    }
+    throw error
+  }
 }
 
 export const refreshTokenViaGateway = async (refreshToken: string): Promise<{ token: string; user: AuthLoginResponse["user"] }> => {
@@ -225,11 +309,17 @@ export const createLostFoundItemViaGateway = async (item: Omit<LostFoundItem, "i
   })
 }
 
-export const contactLostFoundViaGateway = async (itemId: number, message: string) => {
-  return request<{ status: string; message: string }>("/api/lost-found/contact", {
+export const contactLostFoundViaGateway = async (itemId: number, message: string, senderName = "You") => {
+  return request<{ status: string; message: string; request: LostFoundContactRequest }>("/api/lost-found/contact", {
     method: "POST",
-    body: JSON.stringify({ itemId, message }),
+    body: JSON.stringify({ itemId, message, senderName }),
   })
+}
+
+export const fetchLostFoundContactRequestsViaGateway = async (senderName = "") => {
+  const params = new URLSearchParams()
+  if (senderName) params.set("senderName", senderName)
+  return request<LostFoundContactRequest[]>(`/api/lost-found/contact-requests?${params.toString()}`)
 }
 
 export const fetchDirectoryPeopleViaGateway = async (search = "", type = "all") => {
@@ -335,6 +425,42 @@ export const spendDiningRupeesViaGateway = async (amount: number) => {
     method: "POST",
     body: JSON.stringify({ amount }),
   })
+}
+
+export const contactMarketplaceSellerViaGateway = async (seller: string, itemTitle: string, message: string) => {
+  const payload = { seller, itemTitle, message }
+
+  try {
+    return await request<MarketplaceContactResponse>("/api/marketplace/contact", {
+      method: "POST",
+      body: JSON.stringify(payload),
+    })
+  } catch (error) {
+    const messageText = error instanceof Error ? error.message.toLowerCase() : ""
+    const shouldFallback =
+      messageText.includes("route not found") ||
+      messageText.includes("gateway") ||
+      messageText.includes("unable to connect")
+
+    if (!shouldFallback) {
+      throw error
+    }
+
+    const response = await fetch(`${campusServiceFallbackUrl}/api/marketplace/contact`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(payload),
+    })
+
+    if (!response.ok) {
+      const fallbackBody = await response.json().catch(() => ({}))
+      throw new Error(fallbackBody?.message || `Marketplace contact failed: ${response.status}`)
+    }
+
+    return response.json() as Promise<MarketplaceContactResponse>
+  }
 }
 
 export const sendHelpBotMessageViaGateway = async (message: string) => {

@@ -128,14 +128,16 @@ export function NotesSharing() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-3xl font-bold text-balance">Notes Sharing</h1>
-        <p className="text-muted-foreground mt-1 text-pretty">Share and discover study materials from your peers</p>
-        {statusMessage && <p className="text-sm text-primary mt-2">{statusMessage}</p>}
-      </div>
+      <Card className="app-surface">
+        <CardHeader>
+          <CardTitle className="text-2xl">Notes Sharing</CardTitle>
+          <CardDescription>Discover, upload, and organize peer study materials with cleaner workflows.</CardDescription>
+          {statusMessage && <p className="mt-1 text-sm text-primary">{statusMessage}</p>}
+        </CardHeader>
+      </Card>
 
       <Tabs defaultValue="browse" className="w-full">
-        <TabsList className="grid w-full grid-cols-3">
+        <TabsList className="grid h-11 w-full grid-cols-3 rounded-xl border border-border/70 bg-card/70 p-1">
           <TabsTrigger value="browse">Browse Notes</TabsTrigger>
           <TabsTrigger value="upload">Upload Notes</TabsTrigger>
           <TabsTrigger value="saved">Saved ({bookmarkedNotes.size})</TabsTrigger>
@@ -168,7 +170,7 @@ export function NotesSharing() {
 
           <div className="grid gap-4 md:grid-cols-2">
             {filteredNotes.map((note) => (
-              <Card key={note.id} className="hover:shadow-lg transition-shadow">
+              <Card key={note.id} className="app-surface transition-shadow hover:shadow-lg">
                 <CardHeader>
                   <div className="flex items-start justify-between gap-2">
                     <div className="flex-1">
@@ -220,7 +222,7 @@ export function NotesSharing() {
         </TabsContent>
 
         <TabsContent value="upload" className="space-y-4">
-          <Card>
+          <Card className="app-surface">
             <CardHeader>
               <CardTitle>Upload Your Notes</CardTitle>
               <CardDescription>Share your study materials with fellow students</CardDescription>
@@ -281,7 +283,7 @@ export function NotesSharing() {
 
         <TabsContent value="saved" className="space-y-4">
           {bookmarkedNotes.size === 0 ? (
-            <Card>
+            <Card className="app-surface">
               <CardContent className="py-12 text-center">
                 <BookmarkIcon className="size-12 mx-auto mb-4 text-muted-foreground" />
                 <p className="text-muted-foreground">No saved notes yet</p>
@@ -293,7 +295,7 @@ export function NotesSharing() {
               {notes
                 .filter((note) => bookmarkedNotes.has(note.id))
                 .map((note) => (
-                  <Card key={note.id}>
+                  <Card key={note.id} className="app-surface">
                     <CardHeader>
                       <CardTitle className="text-lg">{note.title}</CardTitle>
                       <CardDescription>by {note.contributor}</CardDescription>

@@ -1,7 +1,7 @@
 "use client"
 
 import { useState } from "react"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
@@ -90,11 +90,12 @@ export function StudyGroups() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between flex-wrap gap-4">
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight">Study Groups</h1>
-          <p className="text-muted-foreground mt-1">Join or create study groups for collaborative learning</p>
-        </div>
+      <Card className="app-surface">
+        <CardHeader className="flex flex-row items-center justify-between gap-4 space-y-0">
+          <div>
+            <CardTitle className="text-2xl">Study Groups</CardTitle>
+            <CardDescription>Join or create peer groups for focused collaborative learning.</CardDescription>
+          </div>
         <Dialog open={open} onOpenChange={setOpen}>
           <DialogTrigger asChild>
             <Button className="gap-2">
@@ -135,10 +136,11 @@ export function StudyGroups() {
             </div>
           </DialogContent>
         </Dialog>
-      </div>
+        </CardHeader>
+      </Card>
 
       <div className="grid gap-4 md:grid-cols-3">
-        <Card>
+        <Card className="app-surface">
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-medium">Active Groups</CardTitle>
           </CardHeader>
@@ -147,7 +149,7 @@ export function StudyGroups() {
             <p className="text-xs text-muted-foreground mt-1">Currently running</p>
           </CardContent>
         </Card>
-        <Card>
+        <Card className="app-surface">
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-medium">Your Groups</CardTitle>
           </CardHeader>
@@ -156,7 +158,7 @@ export function StudyGroups() {
             <p className="text-xs text-muted-foreground mt-1">Groups you joined</p>
           </CardContent>
         </Card>
-        <Card>
+        <Card className="app-surface">
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-medium">Next Session</CardTitle>
           </CardHeader>
@@ -173,7 +175,7 @@ export function StudyGroups() {
           const isFull = group.members >= group.maxMembers
 
           return (
-            <Card key={group.id} className="hover:shadow-lg transition-shadow">
+            <Card key={group.id} className="app-surface transition-shadow hover:shadow-lg">
               <CardHeader>
                 <div className="flex items-start justify-between gap-4">
                   <div className="flex-1">

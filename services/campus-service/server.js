@@ -40,6 +40,8 @@ let lostFoundItems = [
   },
 ]
 
+let lostFoundContactRequests = []
+
 const directoryPeople = [
   {
     id: "1",
@@ -203,6 +205,8 @@ let notes = [
   },
 ]
 
+const marketplaceContacts = []
+
 const getHelpBotResponse = (message) => {
   const msg = String(message || "").toLowerCase()
 
@@ -313,15 +317,45 @@ app.post("/api/lost-found/items", (req, res) => {
 })
 
 app.post("/api/lost-found/contact", (req, res) => {
-  const { itemId, message } = req.body || {}
+  const { itemId, message, senderName = "You" } = req.body || {}
   if (!itemId || !message) {
     return res.status(400).json({ message: "itemId and message are required" })
   }
 
+  const item = lostFoundItems.find((entry) => entry.id === Number(itemId))
+  if (!item) {
+    return res.status(404).json({ message: "Item not found" })
+  }
+
+  const contactRequest = {
+    id: Date.now(),
+    itemId: Number(itemId),
+    itemTitle: item.title,
+    recipientName: item.contactName,
+    senderName,
+    message,
+    status: "sent",
+    createdAt: new Date().toISOString(),
+  }
+
+  lostFoundContactRequests.unshift(contactRequest)
+
   return res.status(201).json({
     status: "sent",
     message: "Contact request submitted",
+    request: contactRequest,
   })
+})
+
+app.get("/api/lost-found/contact-requests", (req, res) => {
+  const senderName = String(req.query.senderName || "").toLowerCase()
+
+  const filtered = lostFoundContactRequests.filter((request) => {
+    if (!senderName) return true
+    return String(request.senderName).toLowerCase() === senderName
+  })
+
+  return res.json(filtered)
 })
 
 app.get("/api/directory/people", (req, res) => {
@@ -456,6 +490,32 @@ app.patch("/api/notes/:id/download", (req, res) => {
 
   note.downloads += 1
   return res.json(note)
+})
+
+app.post("/api/marketplace/contact", (req, res) => {
+  const { seller, itemTitle, message, sender = "Current Student" } = req.body || {}
+
+  if (!seller || !itemTitle || !message) {
+    return res.status(400).json({ message: "seller, itemTitle and message are required" })
+  }
+
+  const contactRequest = {
+    id: Date.now(),
+    seller,
+    itemTitle,
+    message,
+    sender,
+    status: "sent",
+    createdAt: new Date().toISOString(),
+  }
+
+  marketplaceContacts.unshift(contactRequest)
+
+  return res.status(201).json({
+    status: "sent",
+    message: `Message sent to ${seller}`,
+    contactId: contactRequest.id,
+  })
 })
 
 app.post("/api/helpbot/chat", (req, res) => {

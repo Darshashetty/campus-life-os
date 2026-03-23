@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { Card, CardContent } from "@/components/ui/card"
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -114,7 +114,7 @@ export function DeadlineManager() {
   const completedDeadlines = deadlines.filter((d) => d.completed)
 
   const DeadlineCard = ({ deadline }: { deadline: Deadline }) => (
-    <Card className={deadline.completed ? "opacity-60" : ""}>
+    <Card className={`app-surface ${deadline.completed ? "opacity-60" : ""}`}>
       <CardContent className="p-4">
         <div className="flex items-start justify-between gap-4">
           <div className="flex items-start gap-3 flex-1">
@@ -165,19 +165,20 @@ export function DeadlineManager() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight">Deadline Reminder Engine</h1>
-          <p className="text-muted-foreground mt-1">Track assignments, exams, and important dates</p>
-        </div>
-        <Dialog open={open} onOpenChange={setOpen}>
+      <Card className="app-surface">
+        <CardHeader className="flex flex-row items-center justify-between gap-4 space-y-0">
+          <div>
+            <CardTitle className="text-2xl">Deadline Manager</CardTitle>
+            <CardDescription>Track assignments, exams, and important dates with clear priority control.</CardDescription>
+          </div>
+          <Dialog open={open} onOpenChange={setOpen}>
           <DialogTrigger asChild>
             <Button className="gap-2">
               <PlusIcon className="size-4" />
               Add Deadline
             </Button>
           </DialogTrigger>
-          <DialogContent>
+          <DialogContent className="sm:rounded-2xl">
             <DialogHeader>
               <DialogTitle>Add New Deadline</DialogTitle>
               <DialogDescription>Create a new deadline to track important dates</DialogDescription>
@@ -246,18 +247,19 @@ export function DeadlineManager() {
               </Button>
             </div>
           </DialogContent>
-        </Dialog>
-      </div>
+          </Dialog>
+        </CardHeader>
+      </Card>
 
       <Tabs defaultValue="active" className="space-y-4">
-        <TabsList>
+        <TabsList className="h-11 rounded-xl border border-border/70 bg-card/70 p-1">
           <TabsTrigger value="active">Active ({activeDeadlines.length})</TabsTrigger>
           <TabsTrigger value="completed">Completed ({completedDeadlines.length})</TabsTrigger>
         </TabsList>
 
         <TabsContent value="active" className="space-y-3">
           {activeDeadlines.length === 0 ? (
-            <Card>
+            <Card className="app-surface">
               <CardContent className="py-12 text-center">
                 <CalendarIcon className="size-12 mx-auto text-muted-foreground mb-4" />
                 <p className="text-muted-foreground">No active deadlines. Great job!</p>
@@ -270,7 +272,7 @@ export function DeadlineManager() {
 
         <TabsContent value="completed" className="space-y-3">
           {completedDeadlines.length === 0 ? (
-            <Card>
+            <Card className="app-surface">
               <CardContent className="py-12 text-center">
                 <CheckIcon className="size-12 mx-auto text-muted-foreground mb-4" />
                 <p className="text-muted-foreground">No completed tasks yet</p>

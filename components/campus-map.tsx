@@ -63,14 +63,16 @@ export function CampusMap() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h2 className="text-3xl font-bold tracking-tight">Campus Map</h2>
-        <p className="text-muted-foreground">Navigate around campus and find locations</p>
-        {directionsMessage && <p className="text-sm mt-2 text-primary">{directionsMessage}</p>}
-      </div>
+      <Card className="app-surface">
+        <CardHeader>
+          <CardTitle className="text-2xl">Campus Map</CardTitle>
+          <CardDescription>Navigate around campus and locate key services quickly.</CardDescription>
+          {directionsMessage && <p className="text-sm text-primary">{directionsMessage}</p>}
+        </CardHeader>
+      </Card>
 
       <Tabs defaultValue="map" className="w-full">
-        <TabsList className="grid w-full grid-cols-2">
+        <TabsList className="grid h-11 w-full grid-cols-2 rounded-xl border border-border/70 bg-card/70 p-1">
           <TabsTrigger value="map">Interactive Map</TabsTrigger>
           <TabsTrigger value="directory">Location Directory</TabsTrigger>
         </TabsList>
@@ -86,7 +88,7 @@ export function CampusMap() {
             />
           </div>
 
-          <Card>
+          <Card className="app-surface">
             <CardContent className="p-6">
               <div className="relative w-full aspect-video bg-gradient-to-br from-green-100 to-green-200 dark:from-green-950 dark:to-green-900 rounded-lg overflow-hidden border-2 border-border">
                 <div className="absolute inset-0 grid grid-cols-10 grid-rows-10 opacity-10">
@@ -145,7 +147,7 @@ export function CampusMap() {
           </Card>
 
           {selectedLocation && (
-            <Card>
+            <Card className="app-surface">
               <CardHeader>
                 <div className="flex items-start justify-between">
                   <div>
@@ -187,7 +189,7 @@ export function CampusMap() {
           </div>
 
           {locations.map((location) => (
-            <Card key={location.id}>
+            <Card key={location.id} className="app-surface">
               <CardHeader className="pb-3">
                 <div className="flex items-start justify-between">
                   <div className="flex items-start gap-3">

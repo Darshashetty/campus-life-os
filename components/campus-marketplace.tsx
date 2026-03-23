@@ -29,6 +29,7 @@ import {
   DialogTitle,
   DialogFooter,
 } from "@/components/ui/dialog"
+import { contactMarketplaceSellerViaGateway } from "@/lib/api-gateway"
 
 interface Item {
   id: number
@@ -103,6 +104,8 @@ export function CampusMarketplace() {
   const [newItemCategory, setNewItemCategory] = useState("")
   const [newItemDescription, setNewItemDescription] = useState("")
   const [activeTab, setActiveTab] = useState("browse")
+  const [statusMessage, setStatusMessage] = useState("")
+  const [isSendingMessage, setIsSendingMessage] = useState(false)
 
   const handleLike = (itemId: number) => {
     setLikedItems((prev) => {
@@ -122,20 +125,29 @@ export function CampusMarketplace() {
     setMessageText("")
   }
 
-  const handleSendMessage = () => {
-    if (selectedItem && messageText.trim()) {
-      alert(
-        `Message sent to ${selectedItem.seller}:\n\n"${messageText}"\n\nIn a real app, this would send an email or in-app message.`,
-      )
+  const handleSendMessage = async () => {
+    if (!selectedItem || !messageText.trim() || isSendingMessage) {
+      return
+    }
+
+    try {
+      setIsSendingMessage(true)
+      setStatusMessage("")
+      const response = await contactMarketplaceSellerViaGateway(selectedItem.seller, selectedItem.title, messageText.trim())
+      setStatusMessage(response.message)
       setContactDialogOpen(false)
       setMessageText("")
       setSelectedItem(null)
+    } catch {
+      setStatusMessage("Unable to send message right now.")
+    } finally {
+      setIsSendingMessage(false)
     }
   }
 
   const handleCreateListing = () => {
     if (!newItemTitle || !newItemPrice || !newItemCondition || !newItemCategory || !newItemDescription) {
-      alert("Please fill in all fields")
+      setStatusMessage("Please fill in all fields before creating a listing.")
       return
     }
 
@@ -177,7 +189,7 @@ export function CampusMarketplace() {
     // Switch to browse tab to see the new listing
     setActiveTab("browse")
 
-    alert("Listing created successfully!")
+    setStatusMessage("Listing created successfully.")
   }
 
   const filteredItems = items.filter((item) => {
@@ -205,13 +217,16 @@ export function CampusMarketplace() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-3xl font-bold text-balance">Campus Marketplace</h1>
-        <p className="text-muted-foreground mt-1 text-pretty">Buy and sell items within your campus community</p>
-      </div>
+      <Card className="app-surface">
+        <CardHeader>
+          <CardTitle className="text-2xl">Campus Marketplace</CardTitle>
+          <CardDescription>Buy and sell items securely within your campus community.</CardDescription>
+          {statusMessage ? <p className="text-sm text-primary">{statusMessage}</p> : null}
+        </CardHeader>
+      </Card>
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-        <TabsList className="grid w-full grid-cols-3">
+        <TabsList className="grid h-11 w-full grid-cols-3 rounded-xl border border-border/70 bg-card/70 p-1">
           <TabsTrigger value="browse">Browse Items</TabsTrigger>
           <TabsTrigger value="sell">Sell Item</TabsTrigger>
           <TabsTrigger value="favorites">Favorites ({likedItems.size})</TabsTrigger>
@@ -246,7 +261,7 @@ export function CampusMarketplace() {
             {filteredItems.map((item) => {
               const CategoryIcon = getCategoryIcon(item.category)
               return (
-                <Card key={item.id} className="hover:shadow-lg transition-shadow">
+                <Card key={item.id} className="app-surface hover:shadow-lg transition-shadow">
                   <div className="aspect-square relative overflow-hidden rounded-t-lg bg-muted">
                     <img
                       src={item.image || "/placeholder.svg"}
@@ -292,7 +307,7 @@ export function CampusMarketplace() {
         </TabsContent>
 
         <TabsContent value="sell" className="space-y-4">
-          <Card>
+          <Card className="app-surface">
             <CardHeader>
               <CardTitle>List an Item</CardTitle>
               <CardDescription>Create a listing for items you want to sell</CardDescription>
@@ -380,7 +395,7 @@ export function CampusMarketplace() {
 
         <TabsContent value="favorites" className="space-y-4">
           {likedItems.size === 0 ? (
-            <Card>
+            <Card className="app-surface">
               <CardContent className="py-12 text-center">
                 <HeartIcon className="size-12 mx-auto mb-4 text-muted-foreground" />
                 <p className="text-muted-foreground">No favorites yet</p>
@@ -392,7 +407,7 @@ export function CampusMarketplace() {
               {items
                 .filter((item) => likedItems.has(item.id))
                 .map((item) => (
-                  <Card key={item.id}>
+                  <Card key={item.id} className="app-surface">
                     <div className="aspect-square relative overflow-hidden rounded-t-lg bg-muted">
                       <img
                         src={item.image || "/placeholder.svg"}
@@ -441,9 +456,9 @@ export function CampusMarketplace() {
             <Button variant="outline" onClick={() => setContactDialogOpen(false)}>
               Cancel
             </Button>
-            <Button onClick={handleSendMessage} disabled={!messageText.trim()}>
+            <Button onClick={handleSendMessage} disabled={!messageText.trim() || isSendingMessage}>
               <SendIcon className="size-4 mr-2" />
-              Send Message
+              {isSendingMessage ? "Sending..." : "Send Message"}
             </Button>
           </DialogFooter>
         </DialogContent>

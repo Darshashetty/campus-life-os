@@ -1,11 +1,10 @@
 "use client"
 
-import { useState } from "react"
+import { useEffect, useRef, useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { MessageCircleIcon, SendIcon, XIcon } from "lucide-react"
-import { ScrollArea } from "@/components/ui/scroll-area"
 import { sendHelpBotMessageViaGateway } from "@/lib/api-gateway"
 
 interface Message {
@@ -28,6 +27,18 @@ export function HelpBot() {
   const [input, setInput] = useState("")
 
   const [isSending, setIsSending] = useState(false)
+  const messagesEndRef = useRef<HTMLDivElement | null>(null)
+
+  const quickPrompts = [
+    "How do I track upcoming deadlines?",
+    "Where can I find GPA calculator?",
+    "How to use study timer effectively?",
+  ]
+
+  useEffect(() => {
+    if (!isOpen) return
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth", block: "end" })
+  }, [messages, isOpen])
 
   const sendMessage = async () => {
     if (!input.trim() || isSending) return
@@ -67,13 +78,17 @@ export function HelpBot() {
     }
   }
 
+  const handleQuickPrompt = (prompt: string) => {
+    setInput(prompt)
+  }
+
   return (
     <>
       {/* Floating Button */}
       {!isOpen && (
         <Button
           size="lg"
-          className="fixed bottom-6 right-6 size-14 rounded-full shadow-lg z-50"
+          className="fixed bottom-24 right-4 z-50 size-14 rounded-full shadow-lg md:bottom-6 md:right-6"
           onClick={() => setIsOpen(true)}
         >
           <MessageCircleIcon className="size-6" />
@@ -82,24 +97,39 @@ export function HelpBot() {
 
       {/* Chat Window */}
       {isOpen && (
-        <Card className="fixed bottom-6 right-6 w-96 h-[500px] shadow-2xl z-50 flex flex-col">
-          <CardHeader className="flex flex-row items-center justify-between pb-3 border-b border-border">
+        <Card className="fixed inset-x-3 bottom-20 top-20 z-50 flex flex-col shadow-2xl md:inset-auto md:bottom-6 md:right-6 md:h-[560px] md:w-[420px]">
+          <CardHeader className="flex flex-row items-center justify-between border-b border-border pb-3">
             <div className="flex items-center gap-2">
               <div className="size-8 rounded-full bg-primary flex items-center justify-center">
                 <MessageCircleIcon className="size-4 text-primary-foreground" />
               </div>
-              <CardTitle className="text-base">Campus HelpBot</CardTitle>
+              <div>
+                <CardTitle className="text-base">Campus HelpBot</CardTitle>
+                <p className="text-xs text-muted-foreground">
+                  <span className="mr-1 inline-block size-1.5 rounded-full bg-emerald-500" />
+                  Online now
+                </p>
+              </div>
             </div>
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={() => setIsOpen(false)}
-            >
+            <Button variant="ghost" size="icon" onClick={() => setIsOpen(false)}>
               <XIcon className="size-4" />
             </Button>
           </CardHeader>
 
-          <ScrollArea className="flex-1 p-4">
+          <div className="flex-1 overflow-y-auto p-4">
+            <div className="mb-4 flex flex-wrap gap-2">
+              {quickPrompts.map((prompt) => (
+                <button
+                  key={prompt}
+                  type="button"
+                  onClick={() => handleQuickPrompt(prompt)}
+                  className="rounded-full border border-border bg-muted/50 px-3 py-1 text-xs text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+                >
+                  {prompt}
+                </button>
+              ))}
+            </div>
+
             <div className="space-y-4">
               {messages.map((message) => (
                 <div key={message.id} className={`flex ${message.sender === "user" ? "justify-end" : "justify-start"}`}>
@@ -111,11 +141,15 @@ export function HelpBot() {
                     }`}
                   >
                     <p className="text-sm whitespace-pre-line">{message.text}</p>
+                    <p className="mt-1 text-[10px] opacity-70">
+                      {message.timestamp.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
+                    </p>
                   </div>
                 </div>
               ))}
+              <div ref={messagesEndRef} />
             </div>
-          </ScrollArea>
+          </div>
 
           <CardContent className="p-3 border-t border-border">
             <div className="flex gap-2">
@@ -124,13 +158,14 @@ export function HelpBot() {
                 value={input}
                 onChange={(e) => setInput(e.target.value)}
                 disabled={isSending}
-                onKeyPress={(e) => {
+                onKeyDown={(e) => {
                   if (e.key === "Enter") {
+                    e.preventDefault()
                     sendMessage()
                   }
                 }}
               />
-              <Button size="icon" onClick={sendMessage} disabled={isSending}>
+              <Button size="icon" onClick={sendMessage} disabled={isSending || !input.trim()}>
                 <SendIcon className="size-4" />
               </Button>
             </div>

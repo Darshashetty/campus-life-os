@@ -110,20 +110,22 @@ export function RideSharing() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h2 className="text-3xl font-bold tracking-tight">Ride Sharing</h2>
-        <p className="text-muted-foreground">Find or offer rides to campus and beyond</p>
-        {statusMessage && <p className="text-sm mt-2 text-primary">{statusMessage}</p>}
-      </div>
+      <Card className="app-surface">
+        <CardHeader>
+          <CardTitle className="text-2xl">Ride Sharing</CardTitle>
+          <CardDescription>Find or offer rides with clear route and seat management.</CardDescription>
+          {statusMessage && <p className="text-sm text-primary">{statusMessage}</p>}
+        </CardHeader>
+      </Card>
 
       <Tabs defaultValue="find" className="w-full">
-        <TabsList className="grid w-full grid-cols-2">
+        <TabsList className="grid h-11 w-full grid-cols-2 rounded-xl border border-border/70 bg-card/70 p-1">
           <TabsTrigger value="find">Find a Ride</TabsTrigger>
           <TabsTrigger value="offer">Offer a Ride</TabsTrigger>
         </TabsList>
 
         <TabsContent value="find" className="space-y-4">
-          <Card>
+          <Card className="app-surface">
             <CardHeader>
               <CardTitle className="text-lg">Search for Rides</CardTitle>
             </CardHeader>
@@ -161,16 +163,16 @@ export function RideSharing() {
 
           <div className="space-y-3">
             {isLoading ? (
-              <Card>
+              <Card className="app-surface">
                 <CardContent className="p-4 text-sm text-muted-foreground">Loading rides...</CardContent>
               </Card>
             ) : rides.length === 0 ? (
-              <Card>
+              <Card className="app-surface">
                 <CardContent className="p-4 text-sm text-muted-foreground">No rides found for this route.</CardContent>
               </Card>
             ) : (
               rides.map((ride) => (
-              <Card key={ride.id}>
+              <Card key={ride.id} className="app-surface">
                 <CardContent className="p-4">
                   <div className="flex items-start gap-4">
                     <Avatar className="size-12">
@@ -227,7 +229,7 @@ export function RideSharing() {
         </TabsContent>
 
         <TabsContent value="offer" className="space-y-4">
-          <Card>
+          <Card className="app-surface">
             <CardHeader>
               <CardTitle>Offer a Ride</CardTitle>
               <CardDescription>Share your ride with fellow students</CardDescription>
@@ -293,7 +295,7 @@ export function RideSharing() {
             </CardContent>
           </Card>
 
-          <Card>
+          <Card className="app-surface">
             <CardHeader>
               <CardTitle>Your Active Rides</CardTitle>
               <CardDescription>Manage your ride offers</CardDescription>

@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import { Header } from "@/components/header"
 import { Dashboard } from "@/components/dashboard"
 import { DeadlineManager } from "@/components/deadline-manager"
@@ -24,23 +24,55 @@ import { CampusMap } from "@/components/campus-map"
 import { MealPlanTracker } from "@/components/meal-plan-tracker"
 import { RideSharing } from "@/components/ride-sharing"
 import { CampusDirectory } from "@/components/campus-directory"
-import { MicroservicesArchitecture } from "@/components/microservices-architecture"
+
+const SESSION_STORAGE_KEY = "campus-life-os-session"
+const VIEW_STORAGE_KEY = "campus-life-os-current-view"
 
 export default function CampusLifeOS() {
   const [isAuthenticated, setIsAuthenticated] = useState(false)
   const [user, setUser] = useState<{ email: string; name: string } | null>(null)
   const [authToken, setAuthToken] = useState<string>("")
   const [currentView, setCurrentView] = useState<string>("dashboard")
+  const [isBootstrapping, setIsBootstrapping] = useState(true)
+
+  useEffect(() => {
+    try {
+      const storedSession = localStorage.getItem(SESSION_STORAGE_KEY)
+      const storedView = localStorage.getItem(VIEW_STORAGE_KEY)
+
+      if (storedSession) {
+        const parsed = JSON.parse(storedSession) as { user: { email: string; name: string }; token: string }
+        if (parsed?.user?.email && parsed?.user?.name && parsed?.token) {
+          setUser(parsed.user)
+          setAuthToken(parsed.token)
+          setIsAuthenticated(true)
+        }
+      }
+
+      if (storedView) {
+        setCurrentView(storedView)
+      }
+    } catch {
+      localStorage.removeItem(SESSION_STORAGE_KEY)
+      localStorage.removeItem(VIEW_STORAGE_KEY)
+    } finally {
+      setIsBootstrapping(false)
+    }
+  }, [])
 
   const handleNavigate = (view: string) => {
     setCurrentView(view)
+    localStorage.setItem(VIEW_STORAGE_KEY, view)
   }
 
   const handleLogin = (email: string, name: string, token: string) => {
+    const session = { user: { email, name }, token }
     setUser({ email, name })
     setAuthToken(token)
     setIsAuthenticated(true)
     setCurrentView("dashboard")
+    localStorage.setItem(SESSION_STORAGE_KEY, JSON.stringify(session))
+    localStorage.setItem(VIEW_STORAGE_KEY, "dashboard")
   }
 
   const handleLogout = () => {
@@ -48,6 +80,16 @@ export default function CampusLifeOS() {
     setUser(null)
     setAuthToken("")
     setCurrentView("dashboard")
+    localStorage.removeItem(SESSION_STORAGE_KEY)
+    localStorage.removeItem(VIEW_STORAGE_KEY)
+  }
+
+  if (isBootstrapping) {
+    return (
+      <div className="flex min-h-screen items-center justify-center">
+        <div className="app-surface px-6 py-4 text-sm text-muted-foreground">Loading Campus Life OS...</div>
+      </div>
+    )
   }
 
   if (!isAuthenticated) {
@@ -55,9 +97,9 @@ export default function CampusLifeOS() {
   }
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="app-shell">
       <Header currentView={currentView} onNavigate={handleNavigate} user={user} onLogout={handleLogout} />
-      <main className="container mx-auto px-4 py-6 pb-24 md:pb-6 max-w-7xl">
+      <main className="container mx-auto max-w-7xl px-4 py-6 pb-24 md:pb-8">
         {currentView === "dashboard" && <Dashboard onNavigate={handleNavigate} authToken={authToken} />}
         {currentView === "deadlines" && <DeadlineManager />}
         {currentView === "skilltime" && <SkillTimeHub />}
@@ -72,7 +114,6 @@ export default function CampusLifeOS() {
         {currentView === "notes" && <NotesSharing />}
         {currentView === "timer" && <StudyTimer />}
         {currentView === "marketplace" && <CampusMarketplace />}
-        {currentView === "architecture" && <MicroservicesArchitecture />}
         {currentView === "scanner" && <QRScanner />}
         {currentView === "map" && <CampusMap />}
         {currentView === "mealplan" && <MealPlanTracker />}

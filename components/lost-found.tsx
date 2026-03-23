@@ -1,7 +1,7 @@
 "use client"
 
 import { useEffect, useState } from "react"
-import { Card, CardContent } from "@/components/ui/card"
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -20,12 +20,17 @@ import {
 import {
   createLostFoundItemViaGateway,
   contactLostFoundViaGateway,
+  fetchLostFoundContactRequestsViaGateway,
   fetchLostFoundItemsViaGateway,
+  type LostFoundContactRequest,
   type LostFoundItem,
 } from "@/lib/api-gateway"
 
 export function LostFound() {
   const [items, setItems] = useState<LostFoundItem[]>([])
+  const [contactRequests, setContactRequests] = useState<LostFoundContactRequest[]>([])
+  const [statusMessage, setStatusMessage] = useState("")
+  const [isSendingContact, setIsSendingContact] = useState(false)
 
   const [searchTerm, setSearchTerm] = useState("")
   const [open, setOpen] = useState(false)
@@ -43,6 +48,10 @@ export function LostFound() {
   useEffect(() => {
     fetchLostFoundItemsViaGateway(searchTerm, "all").then(setItems).catch(() => undefined)
   }, [searchTerm])
+
+  useEffect(() => {
+    fetchLostFoundContactRequestsViaGateway("You").then(setContactRequests).catch(() => undefined)
+  }, [])
 
   const addItem = async () => {
     if (newItem.title && newItem.description && newItem.location) {
@@ -72,7 +81,7 @@ export function LostFound() {
   )
 
   const ItemCard = ({ item }: { item: LostFoundItem }) => (
-    <Card>
+    <Card className="app-surface">
       <CardContent className="p-4">
         <div className="space-y-3">
           <div className="flex items-start justify-between">
@@ -117,11 +126,12 @@ export function LostFound() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between flex-wrap gap-4">
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight">Lost & Found Manager</h1>
-          <p className="text-muted-foreground mt-1">Report and find lost items on campus</p>
-        </div>
+      <Card className="app-surface">
+        <CardHeader className="flex flex-row items-center justify-between gap-4 space-y-0">
+          <div>
+            <CardTitle className="text-2xl">Lost &amp; Found</CardTitle>
+            <CardDescription>Report missing items and connect quickly with relevant contacts.</CardDescription>
+          </div>
         <Dialog open={open} onOpenChange={setOpen}>
           <DialogTrigger asChild>
             <Button className="gap-2">
@@ -204,10 +214,17 @@ export function LostFound() {
             </div>
           </DialogContent>
         </Dialog>
-      </div>
+        </CardHeader>
+      </Card>
+
+      {statusMessage ? (
+        <Card className="app-surface">
+          <CardContent className="p-4 text-sm text-primary">{statusMessage}</CardContent>
+        </Card>
+      ) : null}
 
       {/* Search Bar */}
-      <Card>
+      <Card className="app-surface">
         <CardContent className="p-4">
           <div className="relative">
             <SearchIcon className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
@@ -223,14 +240,14 @@ export function LostFound() {
 
       {/* Items Tabs */}
       <Tabs defaultValue="lost" className="space-y-4">
-        <TabsList className="grid w-full grid-cols-2">
+        <TabsList className="grid h-11 w-full grid-cols-2 rounded-xl border border-border/70 bg-card/70 p-1">
           <TabsTrigger value="lost">Lost Items ({filteredLost.length})</TabsTrigger>
           <TabsTrigger value="found">Found Items ({filteredFound.length})</TabsTrigger>
         </TabsList>
 
         <TabsContent value="lost" className="space-y-3">
           {filteredLost.length === 0 ? (
-            <Card>
+            <Card className="app-surface">
               <CardContent className="py-12 text-center">
                 <SearchIcon className="size-12 mx-auto text-muted-foreground mb-4" />
                 <p className="text-muted-foreground">No lost items reported</p>
@@ -243,7 +260,7 @@ export function LostFound() {
 
         <TabsContent value="found" className="space-y-3">
           {filteredFound.length === 0 ? (
-            <Card>
+            <Card className="app-surface">
               <CardContent className="py-12 text-center">
                 <SearchIcon className="size-12 mx-auto text-muted-foreground mb-4" />
                 <p className="text-muted-foreground">No found items reported</p>
@@ -281,15 +298,26 @@ export function LostFound() {
           <div className="flex gap-2">
             <Button
               className="flex-1"
+              disabled={!contactMessage.trim() || isSendingContact}
               onClick={async () => {
-                if (selectedItem && contactMessage) {
-                  await contactLostFoundViaGateway(selectedItem.id, contactMessage)
+                if (selectedItem && contactMessage.trim()) {
+                  try {
+                    setIsSendingContact(true)
+                    const response = await contactLostFoundViaGateway(selectedItem.id, contactMessage.trim(), "You")
+                    setStatusMessage(`Message sent to ${response.request.recipientName} about ${response.request.itemTitle}.`)
+                    const latestRequests = await fetchLostFoundContactRequestsViaGateway("You")
+                    setContactRequests(latestRequests)
+                  } catch {
+                    setStatusMessage("Unable to send message right now.")
+                  } finally {
+                    setIsSendingContact(false)
+                  }
                 }
                 setContactMessage("")
                 setContactDialogOpen(false)
               }}
             >
-              Send Message
+              {isSendingContact ? "Sending..." : "Send Message"}
             </Button>
             <Button variant="outline" onClick={() => setContactDialogOpen(false)}>
               Cancel
@@ -297,6 +325,38 @@ export function LostFound() {
           </div>
         </DialogContent>
       </Dialog>
+
+      <Card className="app-surface">
+        <CardContent className="p-4 space-y-3">
+          <div className="flex items-center justify-between">
+            <h3 className="text-base font-semibold">Your Contact Requests</h3>
+            <Badge variant="outline">{contactRequests.length}</Badge>
+          </div>
+
+          {contactRequests.length === 0 ? (
+            <p className="text-sm text-muted-foreground">No contact requests sent yet.</p>
+          ) : (
+            <div className="space-y-2">
+              {contactRequests.slice(0, 5).map((request) => (
+                <div key={request.id} className="rounded-lg border border-border/70 bg-card/60 p-3">
+                  <div className="flex items-start justify-between gap-3">
+                    <div>
+                      <p className="text-sm font-medium">
+                        {request.itemTitle} <span className="text-muted-foreground">to {request.recipientName}</span>
+                      </p>
+                      <p className="text-xs text-muted-foreground mt-1">{request.message}</p>
+                    </div>
+                    <Badge>{request.status}</Badge>
+                  </div>
+                  <p className="text-[11px] text-muted-foreground mt-2">
+                    {new Date(request.createdAt).toLocaleString()}
+                  </p>
+                </div>
+              ))}
+            </div>
+          )}
+        </CardContent>
+      </Card>
     </div>
   )
 }

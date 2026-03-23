@@ -236,6 +236,9 @@ app.post("/api/lost-found/items", async (req, res) => {
 app.post("/api/lost-found/contact", async (req, res) => {
   return proxyRequest(res, axios.post(`${campusServiceUrl}/api/lost-found/contact`, req.body))
 })
+app.get("/api/lost-found/contact-requests", async (req, res) => {
+  return proxyRequest(res, axios.get(`${campusServiceUrl}/api/lost-found/contact-requests`, { params: req.query }))
+})
 app.get("/api/directory/people", async (req, res) => {
   return proxyRequest(res, axios.get(`${campusServiceUrl}/api/directory/people`, { params: req.query }))
 })
@@ -262,6 +265,9 @@ app.post("/api/notes", async (req, res) => {
 })
 app.patch("/api/notes/:id/download", async (req, res) => {
   return proxyRequest(res, axios.patch(`${campusServiceUrl}/api/notes/${req.params.id}/download`, req.body))
+})
+app.post("/api/marketplace/contact", async (req, res) => {
+  return proxyRequest(res, axios.post(`${campusServiceUrl}/api/marketplace/contact`, req.body))
 })
 app.post("/api/helpbot/chat", async (req, res) => {
   return proxyRequest(res, axios.post(`${campusServiceUrl}/api/helpbot/chat`, req.body))

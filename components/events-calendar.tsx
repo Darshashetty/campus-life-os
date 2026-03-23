@@ -1,7 +1,7 @@
 "use client"
 
 import { useState } from "react"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { CalendarIcon, MapPinIcon, UsersIcon, PlusIcon } from "lucide-react"
@@ -106,14 +106,15 @@ export function EventsCalendar() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between flex-wrap gap-4">
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight">Campus Events</h1>
-          <p className="text-muted-foreground mt-1">
+      <Card className="app-surface">
+        <CardHeader className="flex flex-row items-center justify-between gap-4 space-y-0">
+          <div>
+            <CardTitle className="text-2xl">Campus Events</CardTitle>
+            <CardDescription>
             Discover and join upcoming campus activities
             {registeredEvents.size > 0 && ` • ${registeredEvents.size} events registered`}
-          </p>
-        </div>
+            </CardDescription>
+          </div>
         <Dialog open={open} onOpenChange={setOpen}>
           <DialogTrigger asChild>
             <Button className="gap-2">
@@ -160,9 +161,10 @@ export function EventsCalendar() {
             </div>
           </DialogContent>
         </Dialog>
-      </div>
+        </CardHeader>
+      </Card>
 
-      <div className="flex gap-2 overflow-x-auto pb-2">
+      <div className="app-surface flex gap-2 overflow-x-auto p-3">
         <Button
           variant={selectedCategory === "all" ? "default" : "outline"}
           size="sm"
@@ -202,7 +204,7 @@ export function EventsCalendar() {
 
       <div className="grid gap-4 md:grid-cols-2">
         {filteredEvents.map((event) => (
-          <Card key={event.id} className="hover:shadow-lg transition-shadow">
+          <Card key={event.id} className="app-surface transition-shadow hover:shadow-lg">
             <CardHeader>
               <div className="flex items-start justify-between gap-4">
                 <div className="flex-1">

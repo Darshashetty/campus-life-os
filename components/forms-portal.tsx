@@ -87,13 +87,15 @@ export function FormsPortal() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-3xl font-bold tracking-tight">Form & Portal Helper</h1>
-        <p className="text-muted-foreground mt-1">Track and submit important campus forms</p>
-      </div>
+      <Card className="app-surface">
+        <CardHeader>
+          <CardTitle className="text-2xl">Forms Portal</CardTitle>
+          <CardDescription>Track submission progress and finish high-priority forms on time.</CardDescription>
+        </CardHeader>
+      </Card>
 
       {/* Progress Overview */}
-      <Card>
+      <Card className="app-surface">
         <CardHeader>
           <CardTitle>Submission Progress</CardTitle>
           <CardDescription>Track your form completion status</CardDescription>
@@ -127,10 +129,10 @@ export function FormsPortal() {
 
       {/* Forms List */}
       <div>
-        <h2 className="text-xl font-semibold mb-4">Important Forms</h2>
+        <h2 className="mb-4 text-xl font-semibold">Important Forms</h2>
         <div className="space-y-3">
           {forms.map((form) => (
-            <Card key={form.id} className={form.status === "submitted" ? "opacity-60" : ""}>
+            <Card key={form.id} className={`app-surface ${form.status === "submitted" ? "opacity-60" : ""}`}>
               <CardContent className="p-4">
                 <div className="flex items-start gap-4">
                   <div className="rounded-lg bg-muted p-3">
@@ -186,15 +188,15 @@ export function FormsPortal() {
       </div>
 
       {/* Helper Tips */}
-      <Card className="bg-primary/5 border-primary/20">
+      <Card className="app-surface">
         <CardHeader>
-          <CardTitle className="text-base">💡 Helper Tips</CardTitle>
+          <CardTitle className="text-base">Helper Tips</CardTitle>
         </CardHeader>
-        <CardContent className="space-y-2 text-sm">
-          <p>• Keep all required documents ready before starting a form</p>
-          <p>• Submit high-priority forms at least 2 days before the deadline</p>
-          <p>• Check your email for form approval confirmations</p>
-          <p>• Use the HelpBot if you need guidance on any form</p>
+        <CardContent className="space-y-2 text-sm text-muted-foreground">
+          <p>Keep all required documents ready before starting a form.</p>
+          <p>Submit high-priority forms at least 2 days before the deadline.</p>
+          <p>Check your email for form approval confirmations.</p>
+          <p>Use Campus HelpBot if you need guidance on any form.</p>
         </CardContent>
       </Card>
     </div>
