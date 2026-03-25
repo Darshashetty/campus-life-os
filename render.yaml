@@ -2,6 +2,9 @@ services:
   - type: web
     name: darsha-campus-student-service
     runtime: node
+    envVars:
+      - key: NODE_VERSION
+        value: 20
     rootDir: backend/services/student-service
     buildCommand: npm install
     startCommand: npm run start
@@ -11,6 +14,9 @@ services:
   - type: web
     name: darsha-campus-tasks-service
     runtime: node
+    envVars:
+      - key: NODE_VERSION
+        value: 20
     rootDir: backend/services/tasks-service
     buildCommand: npm install
     startCommand: npm run start
@@ -20,6 +26,9 @@ services:
   - type: web
     name: darsha-campus-auth-service
     runtime: node
+    envVars:
+      - key: NODE_VERSION
+        value: 20
     rootDir: backend/services/auth-service
     buildCommand: npm install
     startCommand: npm run start
@@ -29,6 +38,9 @@ services:
   - type: web
     name: darsha-campus-notification-service
     runtime: node
+    envVars:
+      - key: NODE_VERSION
+        value: 20
     rootDir: backend/services/notification-service
     buildCommand: npm install
     startCommand: npm run start
@@ -38,6 +50,9 @@ services:
   - type: web
     name: darsha-campus-campus-service
     runtime: node
+    envVars:
+      - key: NODE_VERSION
+        value: 20
     rootDir: backend/services/campus-service
     buildCommand: npm install
     startCommand: npm run start
@@ -53,6 +68,8 @@ services:
     healthCheckPath: /health
     autoDeploy: true
     envVars:
+      - key: NODE_VERSION
+        value: 20
       - key: STUDENT_SERVICE_URL
         value: https://darsha-campus-student-service.onrender.com
       - key: TASKS_SERVICE_URL
@@ -73,6 +90,10 @@ services:
     healthCheckPath: /
     autoDeploy: true
     envVars:
+      - key: NODE_VERSION
+        value: 20
+      - key: PUPPETEER_SKIP_DOWNLOAD
+        value: true
       - key: NODE_ENV
         value: production
       - key: NEXT_PUBLIC_API_GATEWAY_URL
