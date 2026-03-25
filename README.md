@@ -117,18 +117,21 @@ graph TD
 
 ```bash
 campus-life-os-project/
-├── app/
-├── components/
-├── lib/
-├── services/
-│   ├── api-gateway/
-│   ├── auth-service/
-│   ├── student-service/
-│   ├── tasks-service/
-│   ├── notification-service/
-│   └── campus-service/
-├── docker-compose.microservices.yml
-├── package.json
+├── frontend/
+│   ├── app/
+│   ├── components/
+│   ├── lib/
+│   └── package.json
+├── backend/
+│   ├── services/
+│   │   ├── api-gateway/
+│   │   ├── auth-service/
+│   │   ├── student-service/
+│   │   ├── tasks-service/
+│   │   ├── notification-service/
+│   │   └── campus-service/
+│   ├── docker-compose.microservices.yml
+│   └── MICROSERVICES.md
 └── README.md
 ```
 
@@ -175,18 +178,21 @@ curl -X POST http://localhost:4000/api/auth/register \
 Create local env file first:
 
 ```bash
+cd frontend
 cp .env.example .env.local
 ```
 
 On Windows PowerShell:
 
 ```powershell
+Set-Location frontend
 Copy-Item .env.example .env.local
 ```
 
 Install dependencies:
 
 ```bash
+cd frontend
 npm install
 npm run microservices:install
 ```
@@ -194,12 +200,14 @@ npm run microservices:install
 Start backend services and gateway:
 
 ```bash
+cd frontend
 npm run microservices:dev
 ```
 
 Then start frontend:
 
 ```bash
+cd frontend
 npm run dev
 ```
 
@@ -211,26 +219,26 @@ Open:
 ### Run with Docker
 
 ```bash
-docker compose -f docker-compose.microservices.yml up --build
+docker compose -f backend/docker-compose.microservices.yml up --build
 ```
 
 ## Screenshots
 
 ### Login Page
 
-![Login Page](docs/screenshots/login.png)
+![Login Page](frontend/docs/screenshots/login.png)
 
 ### Dashboard
 
-![Dashboard](docs/screenshots/dashboard.png)
+![Dashboard](frontend/docs/screenshots/dashboard.png)
 
 ### Service Status Panel
 
-![Service Status Panel](docs/screenshots/services.png)
+![Service Status Panel](frontend/docs/screenshots/services.png)
 
 ### Study Timer
 
-![Study Timer](docs/screenshots/study-timer.png)
+![Study Timer](frontend/docs/screenshots/study-timer.png)
 
 ## Portfolio Notes
 
