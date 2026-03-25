@@ -240,6 +240,28 @@ docker compose -f backend/docker-compose.microservices.yml up --build
 
 ![Study Timer](frontend/docs/screenshots/study-timer.png)
 
+## Deploy On Render
+
+This repository includes [render.yaml](render.yaml) to deploy all backend microservices, API Gateway, and frontend.
+
+### One-time setup
+
+1. Push your latest code to GitHub.
+2. In Render, choose **New +** -> **Blueprint**.
+3. Select this repository and branch `main`.
+4. Render reads `render.yaml` and creates all services automatically.
+
+### After first deploy
+
+1. Open `darsha-campus-api-gateway` service URL and verify `/health`.
+2. Open `darsha-campus-frontend` URL.
+3. Test login using `demo@university.edu` / `demo123`.
+
+### Notes
+
+- If a service name is already taken in Render, rename it in [render.yaml](render.yaml) and update related URLs in the same file.
+- Keep `NEXT_PUBLIC_API_GATEWAY_URL` pointing to the deployed gateway URL.
+
 ## Portfolio Notes
 
 This project showcases:
