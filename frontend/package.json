@@ -10,6 +10,8 @@
     "dev": "next dev",
     "lint": "eslint .",
     "start": "next start",
+    "monolith:install": "npm --prefix ../backend/monolith install",
+    "monolith:dev": "npm --prefix ../backend/monolith run dev",
     "microservices:install": "npm --prefix ../backend/services/student-service install && npm --prefix ../backend/services/tasks-service install && npm --prefix ../backend/services/auth-service install && npm --prefix ../backend/services/notification-service install && npm --prefix ../backend/services/campus-service install && npm --prefix ../backend/services/api-gateway install",
     "microservices:dev": "concurrently \"npm --prefix ../backend/services/student-service run dev\" \"npm --prefix ../backend/services/tasks-service run dev\" \"npm --prefix ../backend/services/auth-service run dev\" \"npm --prefix ../backend/services/notification-service run dev\" \"npm --prefix ../backend/services/campus-service run dev\" \"npm --prefix ../backend/services/api-gateway run dev\"",
     "microservices:docker": "docker compose -f ../backend/docker-compose.microservices.yml up --build"

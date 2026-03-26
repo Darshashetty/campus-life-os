@@ -84,6 +84,34 @@ graph TD
   Gateway --> Campus
 ```
 
+## Architecture Modes
+
+### Microservices Architecture (Implemented)
+
+This is the primary architecture used in the current project codebase.
+
+- Frontend and backend are decoupled.
+- Backend domains are split into independent services.
+- API Gateway is the single entry point for client requests.
+
+### Monolithic Architecture (Implemented)
+
+An actual monolithic backend is implemented at `backend/monolith` for academic comparison with the microservices setup.
+
+- A single backend app would contain all modules (auth, students, tasks, notifications, campus) in one deployable unit.
+- All features would share one server process and one runtime lifecycle.
+- Simpler initial setup, but less independent scaling and deployment flexibility.
+
+```mermaid
+graph TD
+  UI[Next.js Frontend]
+  MONO[Single Node.js Backend\nAuth + Student + Tasks + Notification + Campus]
+
+  UI --> MONO
+```
+
+Note: The default project mode remains microservices-first, with monolith available as an alternate run mode.
+
 ## Tech Stack
 
 ### Frontend
@@ -165,15 +193,13 @@ curl -X POST http://localhost:4000/api/auth/register \
   -d '{"name":"Alice","email":"alice@university.edu","password":"alice123"}'
 ```
 
-## Setup & Run (Single Workflow)
+## Setup & Run
 
 ### Prerequisites
 
 - Node.js 20+
 - npm 9+
 - Docker (optional)
-
-Use this single local start workflow:
 
 Create local env file first:
 
@@ -194,14 +220,38 @@ Install dependencies:
 ```bash
 cd frontend
 npm install
+npm run monolith:install
 npm run microservices:install
 ```
+
+### Run Mode A: Microservices
 
 Start backend services and gateway:
 
 ```bash
 cd frontend
 npm run microservices:dev
+```
+
+Then start frontend:
+
+```bash
+cd frontend
+npm run dev
+```
+
+Open:
+
+- `http://localhost:3000`
+- `http://localhost:4000/api/services/health`
+
+### Run Mode B: Monolithic
+
+Start monolithic backend:
+
+```bash
+cd frontend
+npm run monolith:dev
 ```
 
 Then start frontend:
