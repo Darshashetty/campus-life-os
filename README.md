@@ -165,7 +165,7 @@ curl -X POST http://localhost:4000/api/auth/register \
   -d '{"name":"Alice","email":"alice@university.edu","password":"alice123"}'
 ```
 
-## Setup & Run
+## Setup & Run (Single Workflow)
 
 ### Prerequisites
 
@@ -173,7 +173,7 @@ curl -X POST http://localhost:4000/api/auth/register \
 - npm 9+
 - Docker (optional)
 
-### Run with npm
+Use this single local start workflow:
 
 Create local env file first:
 
@@ -216,12 +216,6 @@ Open:
 - `http://localhost:3000`
 - `http://localhost:4000/api/services/health`
 
-### Run with Docker
-
-```bash
-docker compose -f backend/docker-compose.microservices.yml up --build
-```
-
 ## Screenshots
 
 ### Login Page
@@ -253,8 +247,8 @@ This repository includes [render.yaml](render.yaml) to deploy all backend micros
 
 ### After first deploy
 
-1. Open `darsha-campus-api-gateway` service URL and verify `/health`.
-2. Open `darsha-campus-frontend` URL.
+1. Open `darsha-api-gateway` service URL and verify `/health`.
+2. Open `darsha-campus-life-frontend` URL.
 3. Test login using `demo@university.edu` / `demo123`.
 
 ### Notes

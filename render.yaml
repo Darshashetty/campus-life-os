@@ -1,6 +1,6 @@
 services:
   - type: web
-    name: student-service
+    name: darsha-student-service
     runtime: node
     envVars:
       - key: NODE_VERSION
@@ -24,7 +24,7 @@ services:
     autoDeploy: true
 
   - type: web
-    name: auth-service
+    name: darsha-auth-service
     runtime: node
     envVars:
       - key: NODE_VERSION
@@ -60,7 +60,7 @@ services:
     autoDeploy: true
 
   - type: web
-    name: api-gateway
+    name: darsha-api-gateway
     runtime: node
     rootDir: backend/services/api-gateway
     buildCommand: npm install
@@ -71,18 +71,18 @@ services:
       - key: NODE_VERSION
         value: 20
       - key: STUDENT_SERVICE_URL
-        value: https://student-service.onrender.com
+        value: https://darsha-student-service.onrender.com
       - key: TASKS_SERVICE_URL
         value: https://darsha-tasks-service.onrender.com
       - key: AUTH_SERVICE_URL
-        value: https://auth-service.onrender.com
+        value: https://darsha-auth-service.onrender.com
       - key: NOTIFICATION_SERVICE_URL
         value: https://darsha-notification-service.onrender.com
       - key: CAMPUS_SERVICE_URL
         value: https://darsha-campus-service.onrender.com
 
   - type: web
-    name: campus-life-frontend
+    name: darsha-campus-life-frontend
     runtime: node
     rootDir: frontend
     buildCommand: npm install && npm run build
@@ -97,8 +97,8 @@ services:
       - key: NODE_ENV
         value: production
       - key: NEXT_PUBLIC_API_GATEWAY_URL
-        value: https://api-gateway.onrender.com
+        value: https://darsha-api-gateway.onrender.com
       - key: NEXT_PUBLIC_AUTH_SERVICE_URL
-        value: https://auth-service.onrender.com
+        value: https://darsha-auth-service.onrender.com
       - key: NEXT_PUBLIC_CAMPUS_SERVICE_URL
         value: https://darsha-campus-service.onrender.com
