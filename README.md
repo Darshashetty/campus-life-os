@@ -10,7 +10,7 @@ A full-stack campus productivity platform built with a Next.js frontend and a No
 
 Campus Life OS brings common student workflows—authentication, academic tracking, campus utilities, reminders, and notifications—into one unified interface.
 
-## Live Preview
+## Local Preview
 
 - Frontend: `http://localhost:3000`
 - API Gateway Health: `http://localhost:4000/api/services/health`
@@ -27,7 +27,7 @@ Campus Life OS is designed as a portfolio-grade microservice architecture projec
 - Provide a single dashboard for student life operations
 - Demonstrate scalable backend design using microservices
 - Keep frontend and backend decoupled via an API Gateway
-- Support local development and containerized deployment
+- Support local development and optional containerized execution
 
 ## Features
 
@@ -169,7 +169,7 @@ curl -X POST http://localhost:4000/api/auth/register \
 
 ### Prerequisites
 
-- Node.js 18+
+- Node.js 20+
 - npm 9+
 - Docker (optional)
 
@@ -216,6 +216,13 @@ Open:
 - `http://localhost:3000`
 - `http://localhost:4000/api/services/health`
 
+Optional Docker run:
+
+```bash
+cd frontend
+npm run microservices:docker
+```
+
 ## Screenshots
 
 ### Login Page
@@ -243,6 +250,11 @@ This project showcases:
 - Full-stack integration with a modern Next.js frontend
 - Modular, feature-driven UI components
 - Local + containerized development workflows
+
+## Submission Status
+
+- GitHub repository submission is the current delivery mode.
+- Cloud deployment config files (`render.yaml`, `vercel.json`) are intentionally removed for now.
 
 ## License
 
