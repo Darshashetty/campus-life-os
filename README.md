@@ -6,7 +6,7 @@
 ![Microservices](https://img.shields.io/badge/Architecture-Microservices-6A5ACD?style=for-the-badge)
 ![Docker](https://img.shields.io/badge/Docker-Enabled-2496ED?style=for-the-badge&logo=docker&logoColor=white)
 
-A full-stack campus productivity platform built with a Next.js frontend and a Node.js + Express microservice backend behind an API Gateway.
+A full-stack campus productivity platform built with a Next.js frontend and Node.js + Express backends that support both microservices and monolithic architecture modes.
 
 Campus Life OS brings common student workflows—authentication, academic tracking, campus utilities, reminders, and notifications—into one unified interface.
 
@@ -52,6 +52,12 @@ Campus Life OS is designed as a portfolio-grade microservice architecture projec
 - Tasks Service for task/deadline endpoints
 - Notification Service for notifications
 - Campus Service for campus modules (map, rides, notes, HelpBot)
+
+### Backend (Monolithic)
+
+- Single Node.js + Express backend implementation at `backend/monolith`
+- Includes the same core domains: auth, students, tasks, notifications, and campus
+- Provides equivalent health, auth, and dashboard APIs for comparison with microservices mode
 
 ## Microservices Overview
 
@@ -151,6 +157,9 @@ campus-life-os-project/
 │   ├── lib/
 │   └── package.json
 ├── backend/
+│   ├── monolith/
+│   │   ├── server.js
+│   │   └── package.json
 │   ├── services/
 │   │   ├── api-gateway/
 │   │   ├── auth-service/
