@@ -276,7 +276,7 @@ app.post("/api/helpbot/chat", async (req, res) => {
 // ─── Aggregate endpoint ───────────────────────────────────────────────────────
 app.get("/api/dashboard-summary", async (_req, res) => {
   try {
-    const [statsRes, deadlinesRes, remindersRes, profileRes, activityRes] = await Promise.all([
+    const [statsRes, deadlinesRes, remindersRes, profileRes, activityRes] = await Promise.allSettled([
       axios.get(`${studentServiceUrl}/api/students/stats`),
       axios.get(`${tasksServiceUrl}/api/tasks/deadlines`),
       axios.get(`${notificationServiceUrl}/api/notifications/reminders`),
@@ -284,17 +284,33 @@ app.get("/api/dashboard-summary", async (_req, res) => {
       axios.get(`${studentServiceUrl}/api/students/activity`),
     ])
 
-    res.json({
-      profile:          profileRes.data,
-      activityStats:    statsRes.data,
-      upcomingDeadlines: deadlinesRes.data,
-      reminders:        remindersRes.data,
-      recentActivity:   activityRes.data,
+    const valueOr = (result, fallback) => (result.status === "fulfilled" ? result.value.data : fallback)
+    const failures = [statsRes, deadlinesRes, remindersRes, profileRes, activityRes].filter(
+      (result) => result.status === "rejected",
+    )
+
+    if (failures.length === 5) {
+      return res.status(502).json({ message: "Unable to fetch dashboard data from services", source: "gateway" })
+    }
+
+    const profileFallback = {
+      name: "Demo Student",
+      department: "Computer Science",
+      gpa: 3.7,
+    }
+
+    return res.json({
+      profile: valueOr(profileRes, profileFallback),
+      activityStats: valueOr(statsRes, []),
+      upcomingDeadlines: valueOr(deadlinesRes, []),
+      reminders: valueOr(remindersRes, []),
+      recentActivity: valueOr(activityRes, []),
       source: "microservices",
+      degraded: failures.length > 0,
     })
   } catch (error) {
     console.error("Gateway aggregation failed", error?.message)
-    res.status(502).json({ message: "Unable to fetch dashboard data from services", source: "gateway" })
+    return res.status(502).json({ message: "Unable to fetch dashboard data from services", source: "gateway" })
   }
 })
 

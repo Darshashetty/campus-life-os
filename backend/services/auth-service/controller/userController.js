@@ -1,16 +1,39 @@
 import jwt from "jsonwebtoken"
+import { State } from "../models/stateModel.js"
 
 export const registerAuthServiceController = (app) => {
 const JWT_SECRET = process.env.JWT_SECRET || "campus-life-secret"
 const JWT_EXPIRES_IN = process.env.JWT_EXPIRES_IN || "2h"
 const JWT_REFRESH_EXPIRES_IN = process.env.JWT_REFRESH_EXPIRES_IN || "7d"
 
-// ─── In-memory user store (replace with DB in production) ────────────────────
-let users = [
+const defaultUsers = [
   { id: 1, email: "demo@university.edu",  password: "demo123",  name: "Demo Student", role: "student" },
   { id: 2, email: "admin@university.edu", password: "admin123", name: "Campus Admin",  role: "admin"   },
 ]
-let nextId = 3
+let users = [...defaultUsers]
+
+const usersStateKey = "auth:users"
+const usersReady = (async () => {
+  const existing = await State.findOne({ key: usersStateKey })
+  if (!existing) {
+    await State.create({ key: usersStateKey, value: defaultUsers })
+    return
+  }
+  users = Array.isArray(existing.value) ? existing.value : [...defaultUsers]
+})()
+
+const persistUsers = async () => {
+  await State.findOneAndUpdate(
+    { key: usersStateKey },
+    { value: users },
+    { upsert: true, new: true, setDefaultsOnInsert: true },
+  )
+}
+
+const getNextUserId = () => {
+  const maxId = users.reduce((acc, user) => Math.max(acc, Number(user.id) || 0), 0)
+  return maxId + 1
+}
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
@@ -62,7 +85,9 @@ app.get("/health", (_req, res) => {
  * Body: { name, email, password, role? }
  * Creates a new student account (role defaults to "student").
  */
-app.post("/api/auth/register", (req, res) => {
+app.post("/api/auth/register", async (req, res) => {
+  try {
+  await usersReady
   const { name, email, password, role = "student" } = req.body || {}
 
   if (!name || !email || !password) {
@@ -73,8 +98,9 @@ app.post("/api/auth/register", (req, res) => {
   }
 
   // NOTE: hash passwords with bcrypt in production — kept plain for student demo
-  const newUser = { id: nextId++, email, password, name, role }
+  const newUser = { id: getNextUserId(), email, password, name, role }
   users.push(newUser)
+  await persistUsers()
 
   const token        = signAccessToken(newUser)
   const refreshToken = signRefreshToken(newUser)
@@ -85,6 +111,9 @@ app.post("/api/auth/register", (req, res) => {
     refreshToken,
     user: safeUser(newUser),
   })
+  } catch {
+    return res.status(500).json({ message: "Failed to register user" })
+  }
 })
 
 /**
@@ -92,7 +121,8 @@ app.post("/api/auth/register", (req, res) => {
  * Body: { email, password }
  * Returns access token + refresh token on success.
  */
-app.post("/api/auth/login", (req, res) => {
+app.post("/api/auth/login", async (req, res) => {
+  await usersReady
   const { email, password } = req.body || {}
 
   if (!email || !password) {
@@ -115,7 +145,8 @@ app.post("/api/auth/login", (req, res) => {
  * Body: { refreshToken }
  * Issues a new access token without requiring re-login.
  */
-app.post("/api/auth/refresh", (req, res) => {
+app.post("/api/auth/refresh", async (req, res) => {
+  await usersReady
   const { refreshToken } = req.body || {}
 
   if (!refreshToken) {
@@ -163,7 +194,8 @@ app.get("/api/auth/verify", (req, res) => {
  * Header: Authorization: Bearer <token>
  * Returns the authenticated user's profile (protected route example).
  */
-app.get("/api/auth/me", requireAuth, (req, res) => {
+app.get("/api/auth/me", requireAuth, async (req, res) => {
+  await usersReady
   const user = users.find((u) => u.id === req.user.sub)
   if (!user) {
     return res.status(404).json({ message: "User not found" })

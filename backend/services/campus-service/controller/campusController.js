@@ -1,40 +1,11 @@
 
+import { State } from "../models/stateModel.js"
 
 export const registerCampusServiceController = (app) => {
-let lostFoundItems = [
-  {
-    id: 1,
-    title: "Blue Water Bottle",
-    description: "Blue insulated water bottle with college sticker",
-    location: "Library 2nd Floor",
-    date: "2026-01-03",
-    type: "lost",
-    category: "Personal Items",
-    contactName: "Rahul S.",
-  },
-  {
-    id: 2,
-    title: "Scientific Calculator",
-    description: "Casio fx-991EX calculator in black pouch",
-    location: "Engineering Block",
-    date: "2026-01-02",
-    type: "found",
-    category: "Electronics",
-    contactName: "Priya P.",
-  },
-  {
-    id: 3,
-    title: "Red Backpack",
-    description: "Red Nike backpack with laptop compartment",
-    location: "Cafeteria",
-    date: "2026-01-04",
-    type: "found",
-    category: "Bags",
-    contactName: "Amit K.",
-  },
+const defaultLostFoundItems = [
 ]
 
-let lostFoundContactRequests = []
+const defaultLostFoundContactRequests = []
 
 const directoryPeople = [
   {
@@ -149,57 +120,59 @@ const campusLocations = [
   },
 ]
 
-let rides = [
-  {
-    id: "1",
-    driver: "Alex Kumar",
-    from: "Campus Main Gate",
-    to: "City Center",
-    date: "2026-03-20",
-    time: "5:00 PM",
-    seats: 3,
-    price: "₹150",
-    status: "available",
-  },
-  {
-    id: "2",
-    driver: "Sarah Chen",
-    from: "Campus Dorms",
-    to: "Airport",
-    date: "2026-03-22",
-    time: "6:30 AM",
-    seats: 2,
-    price: "₹450",
-    status: "available",
-  },
+const defaultRides = [
 ]
 
-let notes = [
-  {
-    id: 1,
-    title: "Data Structures Complete Notes",
-    subject: "Computer Science",
-    contributor: "Alex Chen",
-    downloads: 245,
-    rating: 4.8,
-    description: "Comprehensive notes covering arrays, linked lists, trees, and graphs",
-    fileType: "PDF",
-    uploadDate: "2026-01-15",
-  },
-  {
-    id: 2,
-    title: "Calculus II Revision Guide",
-    subject: "Mathematics",
-    contributor: "Sarah Johnson",
-    downloads: 189,
-    rating: 4.6,
-    description: "Integration techniques, series, and applications",
-    fileType: "PDF",
-    uploadDate: "2026-01-12",
-  },
+const defaultNotes = [
 ]
 
-const marketplaceContacts = []
+const defaultMarketplaceContacts = []
+
+let lostFoundItems = [...defaultLostFoundItems]
+let lostFoundContactRequests = [...defaultLostFoundContactRequests]
+let rides = [...defaultRides]
+let notes = [...defaultNotes]
+let marketplaceContacts = [...defaultMarketplaceContacts]
+
+const keys = {
+  lostFoundItems: "campus:lost-found-items",
+  lostFoundContactRequests: "campus:lost-found-contact-requests",
+  rides: "campus:rides",
+  notes: "campus:notes",
+  marketplaceContacts: "campus:marketplace-contacts",
+}
+
+const loadValue = async (key, defaultValue) => {
+  const existing = await State.findOne({ key })
+  if (!existing) {
+    await State.create({ key, value: defaultValue })
+    return defaultValue
+  }
+  return existing.value
+}
+
+const saveValue = async (key, value) => {
+  await State.findOneAndUpdate(
+    { key },
+    { value },
+    { upsert: true, new: true, setDefaultsOnInsert: true },
+  )
+}
+
+const ready = (async () => {
+  lostFoundItems = await loadValue(keys.lostFoundItems, defaultLostFoundItems)
+  lostFoundContactRequests = await loadValue(keys.lostFoundContactRequests, defaultLostFoundContactRequests)
+  rides = await loadValue(keys.rides, defaultRides)
+  notes = await loadValue(keys.notes, defaultNotes)
+  marketplaceContacts = await loadValue(keys.marketplaceContacts, defaultMarketplaceContacts)
+})()
+
+const nextNumberId = (list) => {
+  const maxId = list.reduce((acc, item) => Math.max(acc, Number(item.id) || 0), 0)
+  return maxId + 1
+}
+
+const nextStringId = (list) => String(nextNumberId(list))
 
 const getHelpBotResponse = (message) => {
   const msg = String(message || "").toLowerCase()
@@ -270,7 +243,8 @@ app.get("/health", (_req, res) => {
   res.json({ service: "campus-service", status: "ok" })
 })
 
-app.get("/api/lost-found/items", (req, res) => {
+app.get("/api/lost-found/items", async (req, res) => {
+  await ready
   const search = String(req.query.search || "").toLowerCase()
   const type = String(req.query.type || "all")
 
@@ -288,7 +262,8 @@ app.get("/api/lost-found/items", (req, res) => {
   res.json(filtered)
 })
 
-app.post("/api/lost-found/items", (req, res) => {
+app.post("/api/lost-found/items", async (req, res) => {
+  await ready
   const { title, description, location, category = "General", type = "lost", contactName = "You" } = req.body || {}
 
   if (!title || !description || !location) {
@@ -296,7 +271,7 @@ app.post("/api/lost-found/items", (req, res) => {
   }
 
   const item = {
-    id: Date.now(),
+    id: nextNumberId(lostFoundItems),
     title,
     description,
     location,
@@ -307,10 +282,12 @@ app.post("/api/lost-found/items", (req, res) => {
   }
 
   lostFoundItems.unshift(item)
+  await saveValue(keys.lostFoundItems, lostFoundItems)
   return res.status(201).json(item)
 })
 
-app.post("/api/lost-found/contact", (req, res) => {
+app.post("/api/lost-found/contact", async (req, res) => {
+  await ready
   const { itemId, message, senderName = "You" } = req.body || {}
   if (!itemId || !message) {
     return res.status(400).json({ message: "itemId and message are required" })
@@ -322,7 +299,7 @@ app.post("/api/lost-found/contact", (req, res) => {
   }
 
   const contactRequest = {
-    id: Date.now(),
+    id: nextNumberId(lostFoundContactRequests),
     itemId: Number(itemId),
     itemTitle: item.title,
     recipientName: item.contactName,
@@ -333,6 +310,7 @@ app.post("/api/lost-found/contact", (req, res) => {
   }
 
   lostFoundContactRequests.unshift(contactRequest)
+  await saveValue(keys.lostFoundContactRequests, lostFoundContactRequests)
 
   return res.status(201).json({
     status: "sent",
@@ -341,7 +319,8 @@ app.post("/api/lost-found/contact", (req, res) => {
   })
 })
 
-app.get("/api/lost-found/contact-requests", (req, res) => {
+app.get("/api/lost-found/contact-requests", async (req, res) => {
+  await ready
   const senderName = String(req.query.senderName || "").toLowerCase()
 
   const filtered = lostFoundContactRequests.filter((request) => {
@@ -383,7 +362,8 @@ app.get("/api/campus/locations", (req, res) => {
   res.json(filtered)
 })
 
-app.get("/api/rides", (req, res) => {
+app.get("/api/rides", async (req, res) => {
+  await ready
   const searchFrom = String(req.query.from || "").toLowerCase()
   const searchTo = String(req.query.to || "").toLowerCase()
 
@@ -396,7 +376,8 @@ app.get("/api/rides", (req, res) => {
   res.json(filtered)
 })
 
-app.post("/api/rides", (req, res) => {
+app.post("/api/rides", async (req, res) => {
+  await ready
   const { driver = "You", from, to, date, time, seats, price } = req.body || {}
 
   if (!from || !to || !date || !time || !seats || !price) {
@@ -404,7 +385,7 @@ app.post("/api/rides", (req, res) => {
   }
 
   const ride = {
-    id: Date.now().toString(),
+    id: nextStringId(rides),
     driver,
     from,
     to,
@@ -416,10 +397,12 @@ app.post("/api/rides", (req, res) => {
   }
 
   rides.unshift(ride)
+  await saveValue(keys.rides, rides)
   return res.status(201).json(ride)
 })
 
-app.patch("/api/rides/:id/request", (req, res) => {
+app.patch("/api/rides/:id/request", async (req, res) => {
+  await ready
   const ride = rides.find((item) => item.id === req.params.id)
   if (!ride) {
     return res.status(404).json({ message: "Ride not found" })
@@ -430,15 +413,19 @@ app.patch("/api/rides/:id/request", (req, res) => {
     ride.status = ride.seats === 0 ? "booked" : "requested"
   }
 
+  await saveValue(keys.rides, rides)
   return res.json(ride)
 })
 
-app.delete("/api/rides/:id", (req, res) => {
+app.delete("/api/rides/:id", async (req, res) => {
+  await ready
   rides = rides.filter((ride) => ride.id !== req.params.id)
+  await saveValue(keys.rides, rides)
   return res.status(204).send()
 })
 
-app.get("/api/notes", (req, res) => {
+app.get("/api/notes", async (req, res) => {
+  await ready
   const search = String(req.query.search || "").toLowerCase()
   const subject = String(req.query.subject || "all")
 
@@ -454,14 +441,15 @@ app.get("/api/notes", (req, res) => {
   res.json(filtered)
 })
 
-app.post("/api/notes", (req, res) => {
+app.post("/api/notes", async (req, res) => {
+  await ready
   const { title, subject, description, contributor = "You", fileType = "PDF" } = req.body || {}
   if (!title || !subject || !description) {
     return res.status(400).json({ message: "title, subject and description are required" })
   }
 
   const note = {
-    id: Date.now(),
+    id: nextNumberId(notes),
     title,
     subject,
     contributor,
@@ -473,20 +461,24 @@ app.post("/api/notes", (req, res) => {
   }
 
   notes.unshift(note)
+  await saveValue(keys.notes, notes)
   return res.status(201).json(note)
 })
 
-app.patch("/api/notes/:id/download", (req, res) => {
+app.patch("/api/notes/:id/download", async (req, res) => {
+  await ready
   const note = notes.find((item) => item.id === Number(req.params.id))
   if (!note) {
     return res.status(404).json({ message: "Note not found" })
   }
 
   note.downloads += 1
+  await saveValue(keys.notes, notes)
   return res.json(note)
 })
 
-app.post("/api/marketplace/contact", (req, res) => {
+app.post("/api/marketplace/contact", async (req, res) => {
+  await ready
   const { seller, itemTitle, message, sender = "Current Student" } = req.body || {}
 
   if (!seller || !itemTitle || !message) {
@@ -494,7 +486,7 @@ app.post("/api/marketplace/contact", (req, res) => {
   }
 
   const contactRequest = {
-    id: Date.now(),
+    id: nextNumberId(marketplaceContacts),
     seller,
     itemTitle,
     message,
@@ -504,6 +496,7 @@ app.post("/api/marketplace/contact", (req, res) => {
   }
 
   marketplaceContacts.unshift(contactRequest)
+  await saveValue(keys.marketplaceContacts, marketplaceContacts)
 
   return res.status(201).json({
     status: "sent",

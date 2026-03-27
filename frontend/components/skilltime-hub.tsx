@@ -5,9 +5,12 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
+import { Textarea } from "@/components/ui/textarea"
 import { Badge } from "@/components/ui/badge"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { PlusIcon, SearchIcon, AwardIcon, ClockIcon } from "lucide-react"
+import { toast } from "@/components/ui/use-toast"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import {
   Dialog,
   DialogContent,
@@ -24,6 +27,15 @@ interface Student {
   skills: string[]
   timeCredits: number
   badges: string[]
+}
+
+interface RegisteredSkill {
+  id: number
+  name: string
+  category: string
+  proficiency: "beginner" | "intermediate" | "advanced"
+  availability: string
+  description: string
 }
 
 export function SkillTimeHub() {
@@ -63,10 +75,20 @@ export function SkillTimeHub() {
   ])
 
   const [searchTerm, setSearchTerm] = useState("")
-  const [newSkill, setNewSkill] = useState("")
+  const [skillForm, setSkillForm] = useState({
+    name: "",
+    category: "",
+    proficiency: "",
+    availability: "",
+    description: "",
+  })
+  const [formErrors, setFormErrors] = useState<Partial<Record<keyof typeof skillForm, string>>>({})
   const [open, setOpen] = useState(false)
   const [selectedStudent, setSelectedStudent] = useState<Student | null>(null)
   const [helpDialogOpen, setHelpDialogOpen] = useState(false)
+  const [myCredits, setMyCredits] = useState(12)
+  const [requestedStudentIds, setRequestedStudentIds] = useState<number[]>([])
+  const [registeredSkills, setRegisteredSkills] = useState<RegisteredSkill[]>([])
 
   const filteredStudents = students.filter(
     (student) =>
@@ -75,18 +97,113 @@ export function SkillTimeHub() {
       student.department.toLowerCase().includes(searchTerm.toLowerCase()),
   )
 
+  const updateSkillForm = (field: keyof typeof skillForm, value: string) => {
+    setSkillForm((prev) => ({ ...prev, [field]: value }))
+    setFormErrors((prev) => ({ ...prev, [field]: undefined }))
+  }
+
   const addSkill = () => {
-    if (newSkill.trim()) {
-      // This would add skill to current user's profile
-      console.log("Adding skill:", newSkill)
-      setNewSkill("")
-      setOpen(false)
+    const nextErrors: Partial<Record<keyof typeof skillForm, string>> = {}
+    const name = skillForm.name.trim()
+    const category = skillForm.category.trim()
+    const proficiency = skillForm.proficiency.trim()
+    const availability = skillForm.availability.trim()
+    const description = skillForm.description.trim()
+
+    if (name.length < 2) nextErrors.name = "Enter a skill name with at least 2 characters."
+    if (!category) nextErrors.category = "Category is required."
+    if (!proficiency) nextErrors.proficiency = "Select your proficiency level."
+    if (!availability) nextErrors.availability = "Availability is required."
+    if (description.length < 15) nextErrors.description = "Add at least 15 characters to describe this skill."
+
+    if (Object.keys(nextErrors).length > 0) {
+      setFormErrors(nextErrors)
+      toast({
+        title: "Complete required fields",
+        description: "Please review and complete all required details.",
+        variant: "destructive",
+      })
+      return
     }
+
+    const alreadyExists = registeredSkills.some((skill) => skill.name.toLowerCase() === name.toLowerCase())
+    if (alreadyExists) {
+      toast({
+        title: "Skill already registered",
+        description: `You already registered ${name}.`,
+      })
+      return
+    }
+
+    setRegisteredSkills((prev) => [
+      ...prev,
+      {
+        id: Date.now(),
+        name,
+        category,
+        proficiency: proficiency as RegisteredSkill["proficiency"],
+        availability,
+        description,
+      },
+    ])
+    setSkillForm({
+      name: "",
+      category: "",
+      proficiency: "",
+      availability: "",
+      description: "",
+    })
+    setFormErrors({})
+    setOpen(false)
+    toast({
+      title: "Skill registered",
+      description: `${name} has been added to your SkillTime profile.`,
+    })
   }
 
   const requestHelp = (student: Student) => {
+    if (requestedStudentIds.includes(student.id)) {
+      toast({
+        title: "Request already sent",
+        description: `You already sent a request to ${student.name}.`,
+      })
+      return
+    }
+
     setSelectedStudent(student)
     setHelpDialogOpen(true)
+  }
+
+  const sendHelpRequest = () => {
+    if (!selectedStudent) return
+
+    const sessionCost = 2
+    if (myCredits < sessionCost) {
+      toast({
+        title: "Not enough credits",
+        description: "You need at least 2 credits to request a session.",
+        variant: "destructive",
+      })
+      return
+    }
+
+    setMyCredits((prev) => prev - sessionCost)
+    setRequestedStudentIds((prev) => [...prev, selectedStudent.id])
+    setStudents((prev) =>
+      prev.map((student) =>
+        student.id === selectedStudent.id
+          ? { ...student, timeCredits: student.timeCredits + sessionCost }
+          : student,
+      ),
+    )
+
+    toast({
+      title: "Request sent",
+      description: `Your request was sent to ${selectedStudent.name}. 2 credits deducted.`,
+    })
+
+    setHelpDialogOpen(false)
+    setSelectedStudent(null)
   }
 
   return (
@@ -106,17 +223,65 @@ export function SkillTimeHub() {
           <DialogContent>
             <DialogHeader>
               <DialogTitle>Register Your Skill</DialogTitle>
-              <DialogDescription>Share your expertise with fellow students</DialogDescription>
+              <DialogDescription>Build your peer mentor profile for the Campus Life OS SkillTime network.</DialogDescription>
             </DialogHeader>
             <div className="space-y-4 py-4">
-              <div className="space-y-2">
-                <Label htmlFor="skill">Skill Name</Label>
-                <Input
-                  id="skill"
-                  placeholder="e.g., Python Programming"
-                  value={newSkill}
-                  onChange={(e) => setNewSkill(e.target.value)}
-                />
+              <div className="grid gap-4 md:grid-cols-2">
+                <div className="space-y-2 md:col-span-2">
+                  <Label htmlFor="skill-name">Skill Name</Label>
+                  <Input
+                    id="skill-name"
+                    placeholder="e.g., Python Programming"
+                    value={skillForm.name}
+                    onChange={(e) => updateSkillForm("name", e.target.value)}
+                  />
+                  {formErrors.name ? <p className="text-xs text-destructive">{formErrors.name}</p> : null}
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="skill-category">Category</Label>
+                  <Input
+                    id="skill-category"
+                    placeholder="e.g., Programming"
+                    value={skillForm.category}
+                    onChange={(e) => updateSkillForm("category", e.target.value)}
+                  />
+                  {formErrors.category ? <p className="text-xs text-destructive">{formErrors.category}</p> : null}
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="skill-level">Proficiency</Label>
+                  <Select value={skillForm.proficiency} onValueChange={(value) => updateSkillForm("proficiency", value)}>
+                    <SelectTrigger id="skill-level">
+                      <SelectValue placeholder="Select level" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="beginner">Beginner</SelectItem>
+                      <SelectItem value="intermediate">Intermediate</SelectItem>
+                      <SelectItem value="advanced">Advanced</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  {formErrors.proficiency ? <p className="text-xs text-destructive">{formErrors.proficiency}</p> : null}
+                </div>
+                <div className="space-y-2 md:col-span-2">
+                  <Label htmlFor="skill-availability">Availability</Label>
+                  <Input
+                    id="skill-availability"
+                    placeholder="e.g., Mon-Fri, 5:00 PM - 7:00 PM"
+                    value={skillForm.availability}
+                    onChange={(e) => updateSkillForm("availability", e.target.value)}
+                  />
+                  {formErrors.availability ? <p className="text-xs text-destructive">{formErrors.availability}</p> : null}
+                </div>
+                <div className="space-y-2 md:col-span-2">
+                  <Label htmlFor="skill-description">How You Can Help</Label>
+                  <Textarea
+                    id="skill-description"
+                    placeholder="Describe what you can teach, expected outcomes, and ideal learner level."
+                    value={skillForm.description}
+                    onChange={(e) => updateSkillForm("description", e.target.value)}
+                    rows={4}
+                  />
+                  {formErrors.description ? <p className="text-xs text-destructive">{formErrors.description}</p> : null}
+                </div>
               </div>
               <div className="rounded-lg bg-muted p-4 space-y-2">
                 <div className="flex items-center gap-2">
@@ -124,13 +289,13 @@ export function SkillTimeHub() {
                   <span className="text-sm font-medium">Time Credit System</span>
                 </div>
                 <p className="text-xs text-muted-foreground">
-                  {"Earn time credits by helping others learn your skills. Use credits to learn from peers!"}
+                  Earn time credits for mentoring sessions and use them to request help from peers across Campus Life OS.
                 </p>
               </div>
             </div>
             <div className="flex gap-2">
               <Button className="flex-1" onClick={addSkill}>
-                Register Skill
+                Save Skill Profile
               </Button>
               <Button variant="outline" onClick={() => setOpen(false)}>
                 Cancel
@@ -171,7 +336,9 @@ export function SkillTimeHub() {
             <CardTitle className="text-sm font-medium">Skills Available</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{new Set(students.flatMap((s) => s.skills)).size}</div>
+            <div className="text-2xl font-bold">
+              {new Set([...students.flatMap((s) => s.skills), ...registeredSkills.map((skill) => skill.name)]).size}
+            </div>
             <p className="text-xs text-muted-foreground mt-1">Unique skills to learn</p>
           </CardContent>
         </Card>
@@ -180,11 +347,37 @@ export function SkillTimeHub() {
             <CardTitle className="text-sm font-medium">Your Time Credits</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">12</div>
+            <div className="text-2xl font-bold">{myCredits}</div>
             <p className="text-xs text-muted-foreground mt-1">Hours available to learn</p>
           </CardContent>
         </Card>
       </div>
+
+      <Card>
+        <CardHeader className="pb-2">
+          <CardTitle className="text-sm font-medium">Your Registered Skills</CardTitle>
+        </CardHeader>
+        <CardContent>
+          {registeredSkills.length === 0 ? (
+            <p className="text-sm text-muted-foreground">No skills registered yet. Add your first skill above.</p>
+          ) : (
+            <div className="grid gap-3 md:grid-cols-2">
+              {registeredSkills.map((skill) => (
+                <div key={skill.id} className="rounded-lg border p-3 space-y-2">
+                  <div className="flex items-center justify-between gap-2">
+                    <Badge variant="secondary">{skill.name}</Badge>
+                    <Badge variant="outline" className="capitalize">
+                      {skill.proficiency}
+                    </Badge>
+                  </div>
+                  <p className="text-xs text-muted-foreground">{skill.category} • {skill.availability}</p>
+                  <p className="text-sm text-muted-foreground">{skill.description}</p>
+                </div>
+              ))}
+            </div>
+          )}
+        </CardContent>
+      </Card>
 
       {/* Student Directory */}
       <div>
@@ -233,9 +426,10 @@ export function SkillTimeHub() {
                       size="sm"
                       className="mt-3 w-full bg-transparent"
                       variant="outline"
+                      disabled={requestedStudentIds.includes(student.id)}
                       onClick={() => requestHelp(student)}
                     >
-                      Request Help
+                      {requestedStudentIds.includes(student.id) ? "Request Sent" : "Request Help"}
                     </Button>
                   </div>
                 </div>
@@ -267,14 +461,14 @@ export function SkillTimeHub() {
             </div>
             <div className="text-sm text-muted-foreground">
               <p>• Session will cost 2 time credits per hour</p>
-              <p>• You currently have 12 credits available</p>
+              <p>• You currently have {myCredits} credits available</p>
               <p>
                 • {selectedStudent?.name} has earned {selectedStudent?.timeCredits} credits helping others
               </p>
             </div>
           </div>
           <div className="flex gap-2">
-            <Button className="flex-1" onClick={() => setHelpDialogOpen(false)}>
+            <Button className="flex-1" onClick={sendHelpRequest}>
               Send Request
             </Button>
             <Button variant="outline" onClick={() => setHelpDialogOpen(false)}>

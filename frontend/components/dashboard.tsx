@@ -27,15 +27,9 @@ interface DashboardProps {
 
 export function Dashboard({ onNavigate }: DashboardProps) {
   const fallbackDeadlines = [
-    { id: 1, title: "Data Structures Assignment", date: "2026-01-08", priority: "high" },
-    { id: 2, title: "Physics Lab Report", date: "2026-01-10", priority: "medium" },
-    { id: 3, title: "Semester Fee Payment", date: "2026-01-15", priority: "high" },
   ]
 
   const fallbackStats = [
-    { label: "Pending Tasks", value: 8, color: "bg-chart-1" },
-    { label: "Skills Shared", value: 5, color: "bg-chart-2" },
-    { label: "Forms Submitted", value: 12, color: "bg-chart-3" },
   ]
 
   const [upcomingDeadlines, setUpcomingDeadlines] = useState(fallbackDeadlines)
